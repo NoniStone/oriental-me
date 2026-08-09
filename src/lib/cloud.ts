@@ -15,6 +15,7 @@ export interface CloudProfile {
   id: string;
   display_name: string | null;
   archetype_id: string | null;
+  is_admin: boolean;
 }
 
 export interface CloudReflection {
@@ -43,7 +44,7 @@ export interface Stats {
 export const fetchProfile = async (userId: string) => {
   const { data, error } = await supabase
     .from("profiles")
-    .select("id, display_name, archetype_id")
+    .select("id, display_name, archetype_id, is_admin")
     .eq("id", userId)
     .maybeSingle();
   if (error) throw error;

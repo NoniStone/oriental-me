@@ -26,7 +26,7 @@ STRICT RULES you must always follow:
 9. Output ONLY valid JSON matching the requested schema. No markdown, no extra text.`;
 
 interface Payload {
-  mode: "pattern" | "reflection" | "plan";
+  mode: "pattern" | "reflection" | "plan" | "trend";
   payload: Record<string, unknown>;
 }
 
@@ -60,6 +60,28 @@ Their reflection: "${p.text}"
 Write ONE warm, brief response (1-2 sentences). Acknowledge what they noticed, and optionally end with one gentle question that deepens their curiosity. Do not give advice unless they asked. Do not use exclamation marks excessively.
 
 Return JSON: { "response": "your 1-2 sentence response" }`;
+  }
+
+  if (mode === "trend") {
+    return `You are drafting a new limited-time Challenge for the app, inspired by a trend the editorial team spotted on Chinese social media.
+
+Trend title: ${p.title}
+Platform: ${p.platform || "Chinese social media"}
+Editor notes: ${p.notes || "none"}
+
+Design a gentle, low-risk lifestyle challenge (3-7 days) that translates this trend for Western users. Daily tasks must be everyday actions (walks, warm drinks, screen-free time, slow meals, gentle movement, rest). The "inspiration" field MUST mention the platform, describe it as a contemporary interpretation of the trend, and state it is not medical advice.
+
+Return JSON with exactly these keys:
+{
+  "title": "catchy challenge name",
+  "emoji": "one emoji",
+  "durationDays": 3-7,
+  "tag": "2-4 word category tag",
+  "summary": "1-2 sentence appealing description",
+  "inspiration": "1-2 sentences: source platform, contemporary interpretation, not medical advice",
+  "days": [ { "day": 1, "title": "short title", "task": "one-sentence task" }, ... one per day, length equals durationDays ],
+  "shareText": "2-3 short lines a user would share after completing it, ending with: Oriental Me · 养生"
+}`;
   }
 
   // plan
@@ -119,7 +141,7 @@ serve(async (req) => {
     }
 
     const { mode, payload } = (await req.json()) as Payload;
-    if (!["pattern", "reflection", "plan"].includes(mode)) {
+    if (!["pattern", "reflection", "plan", "trend"].includes(mode)) {
       return json({ error: "bad_mode" });
     }
     console.log("[ai-yangsheng] request", { userId: user.id, mode });
@@ -128,17 +150,35 @@ serve(async (req) => {
       supabaseUrl,
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
     );
-    const today = new Date().toISOString().slice(0, 10);
-    const { count } = await admin
-      .from("ai_usage")
-      .select("id", { count: "exact", head: true })
-      .eq("user_id", user.id)
-      .eq("date", today);
 
-    const used = count ?? 0;
-    if (used >= DAILY_LIMIT) {
-      console.log("[ai-yangsheng] daily limit reached", { userId: user.id });
-      return json({ error: "limit_reached", remaining: 0 });
+    const { data: profileRow } = await admin
+      .from("profiles")
+      .select("is_admin")
+      .eq("id", user.id)
+      .maybeSingle();
+    const isAdmin = !!profileRow?.is_admin;
+
+    if (mode === "trend" && !isAdmin) {
+      console.error("[ai-yangsheng] non-admin trend request", {
+        userId: user.id,
+      });
+      return json({ error: "forbidden" });
+    }
+
+    const today = new Date().toISOString().slice(0, 10);
+    let used = 0;
+    if (!isAdmin) {
+      const { count } = await admin
+        .from("ai_usage")
+        .select("id", { count: "exact", head: true })
+        .eq("user_id", user.id)
+        .eq("date", today);
+
+      used = count ?? 0;
+      if (used >= DAILY_LIMIT) {
+        console.log("[ai-yangsheng] daily limit reached", { userId: user.id });
+        return json({ error: "limit_reached", remaining: 0 });
+      }
     }
 
     const apiKey = Deno.env.get("DEEPSEEK_API_KEY");
@@ -191,12 +231,17 @@ serve(async (req) => {
       return json({ error: "ai_failed" });
     }
 
-    await admin
-      .from("ai_usage")
-      .insert({ user_id: user.id, date: today, action: mode });
+    if (!isAdmin) {
+      await admin
+        .from("ai_usage")
+        .insert({ user_id: user.id, date: today, action: mode });
+    }
 
     console.log("[ai-yangsheng] success", { userId: user.id, mode });
-    return json({ result, remaining: DAILY_LIMIT - used - 1 });
+    return json({
+      result,
+      remaining: isAdmin ? DAILY_LIMIT : DAILY_LIMIT - used - 1,
+    });
   } catch (e) {
     console.error("[ai-yangsheng] unexpected error", { message: String(e) });
     return json({ error: "unexpected" });

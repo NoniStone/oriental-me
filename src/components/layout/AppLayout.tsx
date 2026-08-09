@@ -1,11 +1,15 @@
 import { Link, NavLink, useLocation } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
 import {
   Sunrise,
   Compass,
   Flag,
   CircleUser,
   Settings as SettingsIcon,
+  ShieldCheck,
 } from "lucide-react";
+import { useAuth } from "@/components/auth/AuthProvider";
+import { fetchProfile } from "@/lib/cloud";
 import { cn } from "@/lib/utils";
 
 const navItems = [
@@ -18,6 +22,13 @@ const navItems = [
 
 const AppLayout = ({ children }: { children: React.ReactNode }) => {
   const location = useLocation();
+  const { user } = useAuth();
+
+  const { data: profile } = useQuery({
+    queryKey: ["profile"],
+    queryFn: () => fetchProfile(user!.id),
+    enabled: !!user,
+  });
 
   return (
     <div className="min-h-screen pb-28">
@@ -36,6 +47,15 @@ const AppLayout = ({ children }: { children: React.ReactNode }) => {
               <span className="ml-2 text-xs text-muted-foreground">养生</span>
             </div>
           </Link>
+          {profile?.is_admin && (
+            <Link
+              to="/admin"
+              className="ml-auto flex items-center gap-1.5 rounded-full bg-secondary px-3 py-1.5 text-xs font-semibold text-secondary-foreground"
+            >
+              <ShieldCheck className="h-3.5 w-3.5" />
+              Studio
+            </Link>
+          )}
         </div>
       </header>
 

@@ -5,7 +5,9 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/components/auth/AuthProvider";
 import ProtectedRoute from "@/components/auth/ProtectedRoute";
+import AdminRoute from "@/components/auth/AdminRoute";
 import AppLayout from "@/components/layout/AppLayout";
+import AdminPage from "./pages/admin/AdminPage";
 import Index from "./pages/Index";
 import Login from "./pages/Login";
 import Quiz from "./pages/Quiz";
@@ -54,6 +56,14 @@ const App = () => (
             />
             <Route path="/discover" element={guarded(<Discover />)} />
             <Route path="/settings" element={guarded(<Settings />)} />
+            <Route
+              path="/admin"
+              element={guarded(
+                <AdminRoute>
+                  <AdminPage />
+                </AdminRoute>,
+              )}
+            />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>

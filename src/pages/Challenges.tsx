@@ -2,14 +2,20 @@ import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { Progress } from "@/components/ui/progress";
 import { useAuth } from "@/components/auth/AuthProvider";
-import { challenges } from "@/data/challenges";
+import { fetchChallenges } from "@/lib/content";
 import { fetchChallengeProgressAll } from "@/lib/cloud";
 import { ArrowRight } from "lucide-react";
 
 const Challenges = () => {
   const { user } = useAuth();
-  const featured = challenges.find((c) => c.featured) ?? challenges[0];
-  const rest = challenges.filter((c) => c.id !== featured.id);
+
+  const { data: challenges = [] } = useQuery({
+    queryKey: ["challenges"],
+    queryFn: fetchChallenges,
+  });
+
+  const featured = challenges.find((c) => c.featured) ?? challenges[0] ?? null;
+  const rest = challenges.filter((c) => c.id !== featured?.id);
 
   const { data: progressRows = [] } = useQuery({
     queryKey: ["challenges-progress"],
@@ -22,7 +28,9 @@ const Challenges = () => {
     return row ? Math.round((row.days_done.length / total) * 100) : null;
   };
 
-  const featuredProgress = progressFor(featured.id, featured.durationDays);
+  const featuredProgress = featured
+    ? progressFor(featured.id, featured.durationDays)
+    : null;
 
   return (
     <div className="space-y-8">
@@ -34,38 +42,40 @@ const Challenges = () => {
         </p>
       </section>
 
-      <Link
-        to={`/challenges/${featured.id}`}
-        className="paper-card block overflow-hidden transition-transform hover:-translate-y-0.5"
-      >
-        <div className="bg-primary p-6 text-primary-foreground">
-          <p className="text-xs font-semibold uppercase tracking-wider opacity-80">
-            {featured.tag}
-          </p>
-          <h2 className="mt-1 font-display text-3xl font-semibold">
-            {featured.emoji} {featured.title}
-          </h2>
-          <p className="mt-2 text-sm leading-relaxed opacity-90">
-            {featured.summary}
-          </p>
-          {featuredProgress !== null ? (
-            <div className="mt-4">
-              <Progress
-                value={featuredProgress}
-                className="h-2 bg-primary-foreground/20"
-              />
-              <p className="mt-1.5 text-xs opacity-90">
-                {featuredProgress}% complete — keep going
-              </p>
-            </div>
-          ) : (
-            <span className="mt-4 inline-flex items-center gap-1 rounded-full bg-primary-foreground/15 px-3.5 py-1.5 text-xs font-semibold">
-              {featured.durationDays} days · Join now
-              <ArrowRight className="h-3.5 w-3.5" />
-            </span>
-          )}
-        </div>
-      </Link>
+      {featured && (
+        <Link
+          to={`/challenges/${featured.id}`}
+          className="paper-card block overflow-hidden transition-transform hover:-translate-y-0.5"
+        >
+          <div className="bg-primary p-6 text-primary-foreground">
+            <p className="text-xs font-semibold uppercase tracking-wider opacity-80">
+              {featured.tag}
+            </p>
+            <h2 className="mt-1 font-display text-3xl font-semibold">
+              {featured.emoji} {featured.title}
+            </h2>
+            <p className="mt-2 text-sm leading-relaxed opacity-90">
+              {featured.summary}
+            </p>
+            {featuredProgress !== null ? (
+              <div className="mt-4">
+                <Progress
+                  value={featuredProgress}
+                  className="h-2 bg-primary-foreground/20"
+                />
+                <p className="mt-1.5 text-xs opacity-90">
+                  {featuredProgress}% complete — keep going
+                </p>
+              </div>
+            ) : (
+              <span className="mt-4 inline-flex items-center gap-1 rounded-full bg-primary-foreground/15 px-3.5 py-1.5 text-xs font-semibold">
+                {featured.durationDays} days · Join now
+                <ArrowRight className="h-3.5 w-3.5" />
+              </span>
+            )}
+          </div>
+        </Link>
+      )}
 
       <section className="space-y-3">
         <h2 className="font-display text-lg font-semibold">More experiments</h2>

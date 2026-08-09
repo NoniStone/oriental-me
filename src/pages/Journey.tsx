@@ -5,7 +5,7 @@ import RitualCard from "@/components/RitualCard";
 import TwoLenses from "@/components/TwoLenses";
 import { useAuth } from "@/components/auth/AuthProvider";
 import { getArchetype } from "@/data/archetypes";
-import { getRitual } from "@/data/rituals";
+import { fetchRituals } from "@/lib/content";
 import { fetchProfile, fetchReflections, fetchStats } from "@/lib/cloud";
 import { Copy, Sparkles } from "lucide-react";
 import { toast } from "sonner";
@@ -31,6 +31,11 @@ const Journey = () => {
     queryKey: ["reflections"],
     queryFn: () => fetchReflections(user!.id, 5),
     enabled: !!user,
+  });
+
+  const { data: ritualList = [] } = useQuery({
+    queryKey: ["rituals"],
+    queryFn: fetchRituals,
   });
 
   const archetype = getArchetype(profile?.archetype_id ?? undefined);
@@ -165,7 +170,7 @@ const Journey = () => {
         </h2>
         <div className="space-y-3">
           {archetype.ritualIds.map((id) => {
-            const ritual = getRitual(id);
+            const ritual = ritualList.find((r) => r.id === id);
             return ritual ? <RitualCard key={id} ritual={ritual} /> : null;
           })}
         </div>

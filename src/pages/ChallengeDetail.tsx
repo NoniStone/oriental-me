@@ -3,7 +3,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { useAuth } from "@/components/auth/AuthProvider";
-import { getChallenge } from "@/data/challenges";
+import { fetchChallengeById } from "@/lib/content";
 import {
   fetchChallengeProgress,
   joinChallengeCloud,
@@ -17,7 +17,12 @@ const ChallengeDetail = () => {
   const { id } = useParams();
   const { user } = useAuth();
   const queryClient = useQueryClient();
-  const challenge = getChallenge(id);
+
+  const { data: challenge = null, isLoading: challengeLoading } = useQuery({
+    queryKey: ["challenge-content", id],
+    queryFn: () => fetchChallengeById(id!),
+    enabled: !!id,
+  });
 
   const { data: progress = null, isLoading } = useQuery({
     queryKey: ["challenge", id],
@@ -51,6 +56,18 @@ const ChallengeDetail = () => {
     onSuccess: invalidate,
     onError: () => toast.error("Couldn't save — please try again"),
   });
+
+  if (challengeLoading) {
+    return (
+      <div className="flex justify-center py-16">
+        <img
+          src="/assets/logo.png"
+          alt=""
+          className="h-10 w-10 animate-pulse rounded-full"
+        />
+      </div>
+    );
+  }
 
   if (!challenge) {
     return (

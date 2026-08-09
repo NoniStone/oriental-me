@@ -13,7 +13,7 @@ import TwoLenses from "@/components/TwoLenses";
 import { useAuth } from "@/components/auth/AuthProvider";
 import { fetchRitualDoneToday, markRitualDoneCloud } from "@/lib/cloud";
 import { todayKey } from "@/lib/storage";
-import type { Ritual } from "@/data/rituals";
+import type { Ritual } from "@/lib/content";
 import { Check, Clock } from "lucide-react";
 import { toast } from "sonner";
 

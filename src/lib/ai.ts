@@ -33,7 +33,7 @@ interface AiResponse<T> {
 }
 
 export const invokeAi = async <T>(
-  mode: "pattern" | "reflection" | "plan",
+  mode: "pattern" | "reflection" | "plan" | "trend",
   payload: Record<string, unknown>,
 ): Promise<AiResponse<T>> => {
   const { data, error } = await supabase.functions.invoke("ai-yangsheng", {

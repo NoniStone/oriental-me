@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Dialog,
@@ -7,11 +8,16 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import EvidenceBadge from "@/components/EvidenceBadge";
-import { feedItems, type FeedItem } from "@/data/feed";
+import { fetchArticles, type Article } from "@/lib/content";
 
 const Discover = () => {
   const [tab, setTab] = useState("all");
-  const [openItem, setOpenItem] = useState<FeedItem | null>(null);
+  const [openItem, setOpenItem] = useState<Article | null>(null);
+
+  const { data: feedItems = [] } = useQuery({
+    queryKey: ["articles"],
+    queryFn: fetchArticles,
+  });
 
   const items = feedItems.filter((item) => tab === "all" || item.type === tab);
 
