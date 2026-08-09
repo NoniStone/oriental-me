@@ -15,6 +15,7 @@ import Challenges from "./pages/Challenges";
 import ChallengeDetail from "./pages/ChallengeDetail";
 import Discover from "./pages/Discover";
 import Plan from "./pages/Plan";
+import Settings from "./pages/Settings";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -52,6 +53,7 @@ const App = () => (
               element={guarded(<ChallengeDetail />)}
             />
             <Route path="/discover" element={guarded(<Discover />)} />
+            <Route path="/settings" element={guarded(<Settings />)} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>

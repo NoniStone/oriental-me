@@ -1,8 +1,11 @@
-import { Link, NavLink, useLocation, useNavigate } from "react-router-dom";
-import { Sunrise, Compass, Flag, CircleUser, LogOut } from "lucide-react";
-import { useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
-import { Button } from "@/components/ui/button";
+import { Link, NavLink, useLocation } from "react-router-dom";
+import {
+  Sunrise,
+  Compass,
+  Flag,
+  CircleUser,
+  Settings as SettingsIcon,
+} from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const navItems = [
@@ -10,18 +13,11 @@ const navItems = [
   { to: "/discover", label: "Discover", icon: Compass },
   { to: "/challenges", label: "Challenges", icon: Flag },
   { to: "/journey", label: "Journey", icon: CircleUser },
+  { to: "/settings", label: "Settings", icon: SettingsIcon },
 ];
 
 const AppLayout = ({ children }: { children: React.ReactNode }) => {
   const location = useLocation();
-  const navigate = useNavigate();
-  const queryClient = useQueryClient();
-
-  const signOut = async () => {
-    await supabase.auth.signOut();
-    queryClient.clear();
-    navigate("/");
-  };
 
   return (
     <div className="min-h-screen pb-28">
@@ -40,15 +36,6 @@ const AppLayout = ({ children }: { children: React.ReactNode }) => {
               <span className="ml-2 text-xs text-muted-foreground">养生</span>
             </div>
           </Link>
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={signOut}
-            className="ml-auto rounded-full text-muted-foreground"
-            title="Sign out"
-          >
-            <LogOut className="h-4 w-4" />
-          </Button>
         </div>
       </header>
 
@@ -62,7 +49,7 @@ const AppLayout = ({ children }: { children: React.ReactNode }) => {
       </main>
 
       <nav className="fixed inset-x-0 bottom-0 z-40 border-t border-border/60 bg-background/90 backdrop-blur-md">
-        <div className="mx-auto grid max-w-2xl grid-cols-4 px-2 pb-[env(safe-area-inset-bottom)]">
+        <div className="mx-auto grid max-w-2xl grid-cols-5 px-2 pb-[env(safe-area-inset-bottom)]">
           {navItems.map(({ to, label, icon: Icon }) => (
             <NavLink
               key={to}
@@ -80,7 +67,7 @@ const AppLayout = ({ children }: { children: React.ReactNode }) => {
                 <>
                   <span
                     className={cn(
-                      "flex h-8 w-14 items-center justify-center rounded-full transition-colors",
+                      "flex h-8 w-12 items-center justify-center rounded-full transition-colors",
                       isActive && "bg-secondary",
                     )}
                   >

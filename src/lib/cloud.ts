@@ -64,6 +64,18 @@ export const saveArchetype = async (
   if (error) throw error;
 };
 
+export const updateDisplayName = async (
+  userId: string,
+  displayName: string,
+) => {
+  const { error } = await supabase.from("profiles").upsert({
+    id: userId,
+    display_name: displayName || null,
+    updated_at: new Date().toISOString(),
+  });
+  if (error) throw error;
+};
+
 // ---- Daily check-ins ----
 
 export interface CloudCheckIn extends CheckIn {
