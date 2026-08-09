@@ -9,7 +9,7 @@ const corsHeaders = {
 
 const DAILY_LIMIT = 3;
 const GEMINI_URL =
-  "https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent";
+  "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent";
 
 const SYSTEM_PROMPT = `You are the AI companion inside "Oriental Me", a cultural wellness app that helps Western users explore Chinese Yangsheng (养生) culture through their own daily life.
 
