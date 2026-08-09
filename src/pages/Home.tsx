@@ -1,20 +1,23 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import CheckIn, { readPattern } from "@/components/CheckIn";
 import RitualCard from "@/components/RitualCard";
 import TwoLenses from "@/components/TwoLenses";
 import { Button } from "@/components/ui/button";
+import { useAuth } from "@/components/auth/AuthProvider";
 import { getArchetype } from "@/data/archetypes";
 import { rituals, getRitual } from "@/data/rituals";
 import { getTodaysDiscovery } from "@/data/discoveries";
 import { challenges } from "@/data/challenges";
 import {
-  getProfile,
-  getTodayCheckIn,
-  dayOfYear,
-  type CheckIn as CheckInType,
-} from "@/lib/storage";
+  fetchProfile,
+  fetchTodayCheckIn,
+  saveCheckInCloud,
+} from "@/lib/cloud";
+import { dayOfYear, todayKey, type CheckIn as CheckInType } from "@/lib/storage";
 import { ArrowRight, Sparkles } from "lucide-react";
+import { toast } from "sonner";
 
 const greeting = () => {
   const hour = new Date().getHours();
@@ -24,9 +27,33 @@ const greeting = () => {
 };
 
 const Home = () => {
-  const [checkIn, setCheckIn] = useState<CheckInType | null>(getTodayCheckIn());
-  const profile = getProfile();
-  const archetype = getArchetype(profile?.archetypeId);
+  const { user } = useAuth();
+  const queryClient = useQueryClient();
+  const [localCheckIn, setLocalCheckIn] = useState<CheckInType | null>(null);
+
+  const { data: profile } = useQuery({
+    queryKey: ["profile"],
+    queryFn: () => fetchProfile(user!.id),
+    enabled: !!user,
+  });
+
+  const { data: cloudCheckIn, isLoading: checkInLoading } = useQuery({
+    queryKey: ["checkin", todayKey()],
+    queryFn: () => fetchTodayCheckIn(user!.id),
+    enabled: !!user,
+  });
+
+  const checkInMutation = useMutation({
+    mutationFn: (c: CheckInType) => saveCheckInCloud(user!.id, c),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["checkin"] });
+      queryClient.invalidateQueries({ queryKey: ["stats"] });
+    },
+    onError: () => toast.error("Couldn't save your check-in — please try again"),
+  });
+
+  const checkIn = localCheckIn ?? cloudCheckIn ?? null;
+  const archetype = getArchetype(profile?.archetype_id ?? undefined);
   const day = dayOfYear();
 
   const todaysRitual = archetype
@@ -37,6 +64,11 @@ const Home = () => {
   const discovery = getTodaysDiscovery(day);
   const featured = challenges.find((c) => c.featured) ?? challenges[0];
   const pattern = checkIn ? readPattern(checkIn) : null;
+
+  const handleCheckIn = (c: CheckInType) => {
+    setLocalCheckIn(c);
+    checkInMutation.mutate(c);
+  };
 
   return (
     <div className="space-y-8">
@@ -82,9 +114,11 @@ const Home = () => {
               {pattern.reading}
             </p>
           </div>
+        ) : checkInLoading ? (
+          <p className="mt-3 text-sm text-muted-foreground">Loading…</p>
         ) : (
           <div className="mt-3">
-            <CheckIn onComplete={setCheckIn} />
+            <CheckIn onComplete={handleCheckIn} />
           </div>
         )}
       </section>

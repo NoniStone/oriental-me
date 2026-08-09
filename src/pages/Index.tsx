@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { getProfile } from "@/lib/storage";
+import { useAuth } from "@/components/auth/AuthProvider";
 import { ArrowRight, Sparkles, Leaf, Compass } from "lucide-react";
 
 const features = [
@@ -22,7 +22,7 @@ const features = [
 ];
 
 const Index = () => {
-  const hasProfile = !!getProfile();
+  const { session } = useAuth();
 
   return (
     <div className="min-h-screen">
@@ -52,7 +52,7 @@ const Index = () => {
           </p>
 
           <div className="mt-7 flex flex-col gap-3 sm:flex-row">
-            {hasProfile ? (
+            {session ? (
               <>
                 <Button asChild size="lg" className="rounded-full">
                   <Link to="/home">
@@ -67,13 +67,13 @@ const Index = () => {
             ) : (
               <>
                 <Button asChild size="lg" className="rounded-full">
-                  <Link to="/quiz">
+                  <Link to="/login">
                     Discover your archetype
                     <ArrowRight className="ml-1 h-4 w-4" />
                   </Link>
                 </Button>
                 <Button asChild size="lg" variant="outline" className="rounded-full">
-                  <Link to="/home">Just look around</Link>
+                  <Link to="/login">Sign in</Link>
                 </Button>
               </>
             )}

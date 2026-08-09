@@ -1,23 +1,56 @@
-import { useState } from "react";
 import { Link, useParams } from "react-router-dom";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
+import { useAuth } from "@/components/auth/AuthProvider";
 import { getChallenge } from "@/data/challenges";
 import {
-  getChallengeProgress,
-  joinChallenge,
-  toggleChallengeDay,
-} from "@/lib/storage";
+  fetchChallengeProgress,
+  joinChallengeCloud,
+  setChallengeDays,
+} from "@/lib/cloud";
 import { cn } from "@/lib/utils";
 import { ArrowLeft, Check, Copy, PartyPopper } from "lucide-react";
 import { toast } from "sonner";
 
 const ChallengeDetail = () => {
   const { id } = useParams();
+  const { user } = useAuth();
+  const queryClient = useQueryClient();
   const challenge = getChallenge(id);
-  const [progress, setProgress] = useState(
-    challenge ? getChallengeProgress(challenge.id) : null,
-  );
+
+  const { data: progress = null, isLoading } = useQuery({
+    queryKey: ["challenge", id],
+    queryFn: () => fetchChallengeProgress(user!.id, id!),
+    enabled: !!user && !!challenge,
+  });
+
+  const invalidate = () => {
+    queryClient.invalidateQueries({ queryKey: ["challenge", id] });
+    queryClient.invalidateQueries({ queryKey: ["challenges-progress"] });
+    queryClient.invalidateQueries({ queryKey: ["stats"] });
+  };
+
+  const joinMutation = useMutation({
+    mutationFn: () => joinChallengeCloud(user!.id, challenge!.id),
+    onSuccess: () => {
+      invalidate();
+      toast.success(`You've joined ${challenge!.title} ${challenge!.emoji}`);
+    },
+    onError: () => toast.error("Couldn't join — please try again"),
+  });
+
+  const toggleMutation = useMutation({
+    mutationFn: (day: number) => {
+      const current = progress?.days_done ?? [];
+      const next = current.includes(day)
+        ? current.filter((d) => d !== day)
+        : [...current, day];
+      return setChallengeDays(user!.id, challenge!.id, next);
+    },
+    onSuccess: invalidate,
+    onError: () => toast.error("Couldn't save — please try again"),
+  });
 
   if (!challenge) {
     return (
@@ -30,18 +63,7 @@ const ChallengeDetail = () => {
     );
   }
 
-  const join = () => {
-    joinChallenge(challenge.id);
-    setProgress(getChallengeProgress(challenge.id));
-    toast.success(`You've joined ${challenge.title} ${challenge.emoji}`);
-  };
-
-  const toggleDay = (day: number) => {
-    toggleChallengeDay(challenge.id, day);
-    setProgress(getChallengeProgress(challenge.id));
-  };
-
-  const doneCount = progress?.daysDone.length ?? 0;
+  const doneCount = progress?.days_done.length ?? 0;
   const percent = Math.round((doneCount / challenge.durationDays) * 100);
   const completed = doneCount === challenge.durationDays;
 
@@ -83,8 +105,12 @@ const ChallengeDetail = () => {
               <Progress value={percent} className="h-2" />
             </div>
           ) : (
-            <Button onClick={join} className="w-full rounded-full">
-              Join this challenge
+            <Button
+              onClick={() => joinMutation.mutate()}
+              disabled={isLoading || joinMutation.isPending}
+              className="w-full rounded-full"
+            >
+              {joinMutation.isPending ? "Joining…" : "Join this challenge"}
             </Button>
           )}
         </div>
@@ -97,7 +123,7 @@ const ChallengeDetail = () => {
             Challenge complete!
           </h2>
           <p className="mx-auto mt-1 max-w-sm text-sm text-muted-foreground">
-            Seven small experiments, finished. Tell a friend what you noticed —
+            Small experiments, finished. Tell a friend what you noticed —
             curiosity is contagious.
           </p>
           <Button onClick={copyShare} className="mt-4 rounded-full">
@@ -110,12 +136,12 @@ const ChallengeDetail = () => {
       <section className="space-y-3">
         <h2 className="font-display text-lg font-semibold">The days</h2>
         {challenge.days.map((day) => {
-          const done = progress?.daysDone.includes(day.day) ?? false;
+          const done = progress?.days_done.includes(day.day) ?? false;
           return (
             <button
               key={day.day}
-              disabled={!progress}
-              onClick={() => toggleDay(day.day)}
+              disabled={!progress || toggleMutation.isPending}
+              onClick={() => toggleMutation.mutate(day.day)}
               className={cn(
                 "paper-card flex w-full items-start gap-4 p-4 text-left transition-all",
                 progress && "hover:-translate-y-0.5",
@@ -147,7 +173,7 @@ const ChallengeDetail = () => {
             </button>
           );
         })}
-        {!progress && (
+        {!progress && !isLoading && (
           <p className="text-center text-xs text-muted-foreground">
             Join the challenge to start checking off days.
           </p>

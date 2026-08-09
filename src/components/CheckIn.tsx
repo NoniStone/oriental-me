@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { saveCheckIn, type CheckIn as CheckInType } from "@/lib/storage";
+import type { CheckIn as CheckInType } from "@/lib/storage";
 import { cn } from "@/lib/utils";
 
 const feelings = [
@@ -92,9 +92,7 @@ const CheckIn = ({ onComplete }: { onComplete: (c: CheckInType) => void }) => {
 
   const submit = () => {
     if (!feeling || !need) return;
-    const checkIn = { feeling, need };
-    saveCheckIn(checkIn);
-    onComplete(checkIn);
+    onComplete({ feeling, need });
   };
 
   return (

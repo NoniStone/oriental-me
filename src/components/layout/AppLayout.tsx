@@ -1,5 +1,8 @@
-import { Link, NavLink, useLocation } from "react-router-dom";
-import { Sunrise, Compass, Flag, CircleUser } from "lucide-react";
+import { Link, NavLink, useLocation, useNavigate } from "react-router-dom";
+import { Sunrise, Compass, Flag, CircleUser, LogOut } from "lucide-react";
+import { useQueryClient } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
 const navItems = [
@@ -11,6 +14,14 @@ const navItems = [
 
 const AppLayout = ({ children }: { children: React.ReactNode }) => {
   const location = useLocation();
+  const navigate = useNavigate();
+  const queryClient = useQueryClient();
+
+  const signOut = async () => {
+    await supabase.auth.signOut();
+    queryClient.clear();
+    navigate("/");
+  };
 
   return (
     <div className="min-h-screen pb-28">
@@ -29,6 +40,15 @@ const AppLayout = ({ children }: { children: React.ReactNode }) => {
               <span className="ml-2 text-xs text-muted-foreground">养生</span>
             </div>
           </Link>
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={signOut}
+            className="ml-auto rounded-full text-muted-foreground"
+            title="Sign out"
+          >
+            <LogOut className="h-4 w-4" />
+          </Button>
         </div>
       </header>
 

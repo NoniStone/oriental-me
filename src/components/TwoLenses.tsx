@@ -1,7 +1,9 @@
 import { useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { addReflection } from "@/lib/storage";
+import { useAuth } from "@/components/auth/AuthProvider";
+import { addReflectionCloud } from "@/lib/cloud";
 import { toast } from "sonner";
 
 interface TwoLensesProps {
@@ -19,15 +21,27 @@ const TwoLenses = ({
   reflectPrompt,
   reflectContext = "Reflection",
 }: TwoLensesProps) => {
+  const { user } = useAuth();
+  const queryClient = useQueryClient();
   const [text, setText] = useState("");
+  const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
 
-  const saveReflection = () => {
-    if (!text.trim()) return;
-    addReflection(reflectContext, text.trim());
-    setSaved(true);
-    setText("");
-    toast.success("Reflection saved to your Journey");
+  const saveReflection = async () => {
+    if (!text.trim() || !user) return;
+    setSaving(true);
+    try {
+      await addReflectionCloud(user.id, reflectContext, text.trim());
+      queryClient.invalidateQueries({ queryKey: ["reflections"] });
+      queryClient.invalidateQueries({ queryKey: ["stats"] });
+      setSaved(true);
+      setText("");
+      toast.success("Reflection saved to your Journey");
+    } catch {
+      toast.error("Couldn't save your reflection — please try again");
+    } finally {
+      setSaving(false);
+    }
   };
 
   return (
@@ -76,10 +90,10 @@ const TwoLenses = ({
               <Button
                 size="sm"
                 onClick={saveReflection}
-                disabled={!text.trim()}
+                disabled={!text.trim() || saving}
                 className="rounded-full"
               >
-                Save reflection
+                {saving ? "Saving…" : "Save reflection"}
               </Button>
             </div>
           )}

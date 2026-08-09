@@ -1,16 +1,25 @@
 import { Link } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
 import { Progress } from "@/components/ui/progress";
+import { useAuth } from "@/components/auth/AuthProvider";
 import { challenges } from "@/data/challenges";
-import { getChallengeProgress } from "@/lib/storage";
+import { fetchChallengeProgressAll } from "@/lib/cloud";
 import { ArrowRight } from "lucide-react";
 
 const Challenges = () => {
+  const { user } = useAuth();
   const featured = challenges.find((c) => c.featured) ?? challenges[0];
   const rest = challenges.filter((c) => c.id !== featured.id);
 
+  const { data: progressRows = [] } = useQuery({
+    queryKey: ["challenges-progress"],
+    queryFn: () => fetchChallengeProgressAll(user!.id),
+    enabled: !!user,
+  });
+
   const progressFor = (id: string, total: number) => {
-    const p = getChallengeProgress(id);
-    return p ? Math.round((p.daysDone.length / total) * 100) : null;
+    const row = progressRows.find((r) => r.challenge_id === id);
+    return row ? Math.round((row.days_done.length / total) * 100) : null;
   };
 
   const featuredProgress = progressFor(featured.id, featured.durationDays);

@@ -1,24 +1,51 @@
 import { Link, useSearchParams } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import RitualCard from "@/components/RitualCard";
 import TwoLenses from "@/components/TwoLenses";
+import { useAuth } from "@/components/auth/AuthProvider";
 import { getArchetype } from "@/data/archetypes";
 import { getRitual } from "@/data/rituals";
-import {
-  getProfile,
-  getCheckIns,
-  getRitualsDone,
-  getReflections,
-  getChallengeState,
-} from "@/lib/storage";
+import { fetchProfile, fetchReflections, fetchStats } from "@/lib/cloud";
 import { Copy, Sparkles } from "lucide-react";
 import { toast } from "sonner";
 
 const Journey = () => {
   const [params] = useSearchParams();
   const isWelcome = params.get("welcome") === "1";
-  const profile = getProfile();
-  const archetype = getArchetype(profile?.archetypeId);
+  const { user } = useAuth();
+
+  const { data: profile, isLoading } = useQuery({
+    queryKey: ["profile"],
+    queryFn: () => fetchProfile(user!.id),
+    enabled: !!user,
+  });
+
+  const { data: stats } = useQuery({
+    queryKey: ["stats"],
+    queryFn: () => fetchStats(user!.id),
+    enabled: !!user,
+  });
+
+  const { data: reflections = [] } = useQuery({
+    queryKey: ["reflections"],
+    queryFn: () => fetchReflections(user!.id, 5),
+    enabled: !!user,
+  });
+
+  const archetype = getArchetype(profile?.archetype_id ?? undefined);
+
+  if (isLoading) {
+    return (
+      <div className="flex justify-center py-16">
+        <img
+          src="/assets/logo.png"
+          alt=""
+          className="h-10 w-10 animate-pulse rounded-full"
+        />
+      </div>
+    );
+  }
 
   if (!archetype) {
     return (
@@ -39,14 +66,12 @@ const Journey = () => {
     );
   }
 
-  const stats = [
-    { label: "Check-ins", value: Object.keys(getCheckIns()).length },
-    { label: "Rituals done", value: getRitualsDone().length },
-    { label: "Reflections", value: getReflections().length },
-    { label: "Challenges", value: Object.keys(getChallengeState()).length },
+  const statItems = [
+    { label: "Check-ins", value: stats?.checkIns ?? 0 },
+    { label: "Rituals done", value: stats?.rituals ?? 0 },
+    { label: "Reflections", value: stats?.reflections ?? 0 },
+    { label: "Challenges", value: stats?.challenges ?? 0 },
   ];
-
-  const reflections = getReflections().slice(0, 5);
 
   const shareText = `Apparently I'm a ${archetype.name} ${archetype.emoji}\n\n${archetype.tagline}\n\nOriental Me · 养生`;
 
@@ -151,7 +176,7 @@ const Journey = () => {
           Your journey so far
         </h2>
         <div className="grid grid-cols-4 gap-3">
-          {stats.map((s) => (
+          {statItems.map((s) => (
             <div key={s.label} className="paper-card p-3 text-center">
               <p className="font-display text-2xl font-semibold text-primary">
                 {s.value}
@@ -170,12 +195,12 @@ const Journey = () => {
             Recent reflections
           </h2>
           <div className="space-y-3">
-            {reflections.map((r, i) => (
-              <div key={i} className="paper-card p-4">
+            {reflections.map((r) => (
+              <div key={r.id} className="paper-card p-4">
                 <p className="text-xs font-medium text-primary">{r.context}</p>
                 <p className="mt-1 text-sm leading-relaxed">{r.text}</p>
                 <p className="mt-2 text-xs text-muted-foreground">
-                  {new Date(r.date).toLocaleDateString("en-GB", {
+                  {new Date(r.created_at).toLocaleDateString("en-GB", {
                     day: "numeric",
                     month: "short",
                   })}

@@ -1,28 +1,42 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { useQueryClient } from "@tanstack/react-query";
 import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
+import { useAuth } from "@/components/auth/AuthProvider";
 import { quizQuestions, computeArchetype } from "@/data/quiz";
-import { saveProfile } from "@/lib/storage";
+import { saveArchetype } from "@/lib/cloud";
 import { ArrowLeft, X } from "lucide-react";
+import { toast } from "sonner";
 
 const Quiz = () => {
   const navigate = useNavigate();
+  const { user } = useAuth();
+  const queryClient = useQueryClient();
   const [step, setStep] = useState(0);
   const [answers, setAnswers] = useState<number[]>([]);
+  const [saving, setSaving] = useState(false);
 
   const question = quizQuestions[step];
   const progress = (step / quizQuestions.length) * 100;
 
-  const choose = (optionIndex: number) => {
+  const choose = async (optionIndex: number) => {
+    if (saving) return;
     const next = [...answers.slice(0, step), optionIndex];
     setAnswers(next);
     if (step + 1 < quizQuestions.length) {
       setStep(step + 1);
-    } else {
-      const archetypeId = computeArchetype(next);
-      saveProfile(archetypeId);
+      return;
+    }
+    const archetypeId = computeArchetype(next);
+    setSaving(true);
+    try {
+      await saveArchetype(user!.id, archetypeId);
+      queryClient.invalidateQueries({ queryKey: ["profile"] });
       navigate("/journey?welcome=1");
+    } catch {
+      toast.error("Couldn't save your result — please try again");
+      setSaving(false);
     }
   };
 
@@ -41,7 +55,7 @@ const Quiz = () => {
             </Button>
           ) : (
             <Button asChild variant="ghost" size="icon" className="rounded-full">
-              <Link to="/">
+              <Link to="/home">
                 <X className="h-5 w-5" />
               </Link>
             </Button>
@@ -68,7 +82,8 @@ const Quiz = () => {
               <button
                 key={i}
                 onClick={() => choose(i)}
-                className="paper-card flex w-full items-center gap-4 p-4 text-left transition-all hover:-translate-y-0.5 hover:border-primary/50"
+                disabled={saving}
+                className="paper-card flex w-full items-center gap-4 p-4 text-left transition-all hover:-translate-y-0.5 hover:border-primary/50 disabled:opacity-60"
                 style={{ animationDelay: `${i * 60}ms` }}
               >
                 <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-secondary text-xl">
@@ -80,6 +95,11 @@ const Quiz = () => {
               </button>
             ))}
           </div>
+          {saving && (
+            <p className="mt-6 text-center text-sm text-muted-foreground">
+              Reading your pattern…
+            </p>
+          )}
         </div>
 
         <p className="mt-10 text-center text-xs text-muted-foreground">

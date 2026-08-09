@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -10,7 +10,9 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import TwoLenses from "@/components/TwoLenses";
-import { isRitualDoneToday, markRitualDone } from "@/lib/storage";
+import { useAuth } from "@/components/auth/AuthProvider";
+import { fetchRitualDoneToday, markRitualDoneCloud } from "@/lib/cloud";
+import { todayKey } from "@/lib/storage";
 import type { Ritual } from "@/data/rituals";
 import { Check, Clock } from "lucide-react";
 import { toast } from "sonner";
@@ -22,13 +24,26 @@ const RitualCard = ({
   ritual: Ritual;
   highlight?: boolean;
 }) => {
-  const [done, setDone] = useState(highlight && isRitualDoneToday());
+  const { user } = useAuth();
+  const queryClient = useQueryClient();
 
-  const complete = () => {
-    markRitualDone();
-    setDone(true);
-    toast.success("Ritual complete — beautifully done 🌿");
-  };
+  const { data: done = false } = useQuery({
+    queryKey: ["ritual-done", todayKey()],
+    queryFn: () => fetchRitualDoneToday(user!.id),
+    enabled: highlight && !!user,
+  });
+
+  const completeMutation = useMutation({
+    mutationFn: () => markRitualDoneCloud(user!.id, ritual.id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["ritual-done"] });
+      queryClient.invalidateQueries({ queryKey: ["stats"] });
+      toast.success("Ritual complete — beautifully done 🌿");
+    },
+    onError: () => toast.error("Couldn't save — please try again"),
+  });
+
+  const showDone = highlight && done;
 
   return (
     <Dialog>
@@ -43,7 +58,7 @@ const RitualCard = ({
                 <h3 className="font-display text-lg font-semibold">
                   {ritual.title}
                 </h3>
-                {done && (
+                {showDone && (
                   <span className="flex h-5 w-5 items-center justify-center rounded-full bg-primary text-primary-foreground">
                     <Check className="h-3 w-3" />
                   </span>
@@ -105,13 +120,19 @@ const RitualCard = ({
           />
 
           {highlight &&
-            (done ? (
+            (showDone ? (
               <p className="text-center text-sm font-medium text-primary">
                 Completed today ✓
               </p>
             ) : (
-              <Button onClick={complete} className="w-full rounded-full">
-                Mark today's ritual as done
+              <Button
+                onClick={() => completeMutation.mutate()}
+                disabled={completeMutation.isPending}
+                className="w-full rounded-full"
+              >
+                {completeMutation.isPending
+                  ? "Saving…"
+                  : "Mark today's ritual as done"}
               </Button>
             ))}
         </div>
