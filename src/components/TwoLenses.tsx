@@ -3,7 +3,9 @@ import { useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { useAuth } from "@/components/auth/AuthProvider";
-import { addReflectionCloud } from "@/lib/cloud";
+import { addReflectionCloud, saveReflectionAiResponse } from "@/lib/cloud";
+import { invokeAi, aiErrorMessage } from "@/lib/ai";
+import { Sparkles } from "lucide-react";
 import { toast } from "sonner";
 
 interface TwoLensesProps {
@@ -24,23 +26,50 @@ const TwoLenses = ({
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const [text, setText] = useState("");
+  const [savedText, setSavedText] = useState("");
   const [saving, setSaving] = useState(false);
-  const [saved, setSaved] = useState(false);
+  const [savedId, setSavedId] = useState<string | null>(null);
+  const [aiResponse, setAiResponse] = useState<string | null>(null);
+  const [aiLoading, setAiLoading] = useState(false);
 
   const saveReflection = async () => {
     if (!text.trim() || !user) return;
     setSaving(true);
     try {
-      await addReflectionCloud(user.id, reflectContext, text.trim());
+      const id = await addReflectionCloud(user.id, reflectContext, text.trim());
       queryClient.invalidateQueries({ queryKey: ["reflections"] });
       queryClient.invalidateQueries({ queryKey: ["stats"] });
-      setSaved(true);
+      setSavedId(id);
+      setSavedText(text.trim());
       setText("");
       toast.success("Reflection saved to your Journey");
     } catch {
       toast.error("Couldn't save your reflection — please try again");
     } finally {
       setSaving(false);
+    }
+  };
+
+  const getAiResponse = async () => {
+    if (!savedId) return;
+    setAiLoading(true);
+    try {
+      const res = await invokeAi<{ response: string }>("reflection", {
+        context: reflectContext,
+        text: savedText,
+      });
+      queryClient.invalidateQueries({ queryKey: ["ai-remaining"] });
+      if (res.result?.response) {
+        setAiResponse(res.result.response);
+        await saveReflectionAiResponse(savedId, res.result.response);
+        queryClient.invalidateQueries({ queryKey: ["reflections"] });
+      } else {
+        toast.error(aiErrorMessage(res.error ?? "unknown"));
+      }
+    } catch {
+      toast.error(aiErrorMessage("unknown"));
+    } finally {
+      setAiLoading(false);
     }
   };
 
@@ -75,10 +104,33 @@ const TwoLenses = ({
         <div className="rounded-2xl bg-muted/70 p-4">
           <p className="mb-1.5 text-sm font-semibold">✍️ Reflect</p>
           <p className="mb-3 text-sm text-muted-foreground">{reflectPrompt}</p>
-          {saved ? (
-            <p className="text-sm font-medium text-primary">
-              Saved to your Journey ✓
-            </p>
+          {savedId ? (
+            <div className="space-y-3">
+              <p className="text-sm font-medium text-primary">
+                Saved to your Journey ✓
+              </p>
+              {aiResponse ? (
+                <div className="rounded-xl bg-jade-soft p-3 animate-fade-up">
+                  <p className="text-sm italic leading-relaxed text-secondary-foreground">
+                    🍃 {aiResponse}
+                  </p>
+                </div>
+              ) : aiLoading ? (
+                <p className="text-sm text-muted-foreground">
+                  ✨ Your companion is reading…
+                </p>
+              ) : (
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={getAiResponse}
+                  className="rounded-full"
+                >
+                  <Sparkles className="mr-1.5 h-3.5 w-3.5" />
+                  Get a response
+                </Button>
+              )}
+            </div>
           ) : (
             <div className="space-y-2">
               <Textarea

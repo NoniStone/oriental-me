@@ -13,10 +13,18 @@ import { challenges } from "@/data/challenges";
 import {
   fetchProfile,
   fetchTodayCheckIn,
+  fetchRecentCheckIns,
   saveCheckInCloud,
+  saveCheckInReading,
 } from "@/lib/cloud";
+import {
+  invokeAi,
+  fetchAiRemaining,
+  aiErrorMessage,
+  type AiPatternReading,
+} from "@/lib/ai";
 import { dayOfYear, todayKey, type CheckIn as CheckInType } from "@/lib/storage";
-import { ArrowRight, Sparkles } from "lucide-react";
+import { ArrowRight, Sparkles, ScrollText } from "lucide-react";
 import { toast } from "sonner";
 
 const greeting = () => {
@@ -30,6 +38,9 @@ const Home = () => {
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const [localCheckIn, setLocalCheckIn] = useState<CheckInType | null>(null);
+  const [aiReading, setAiReading] = useState<AiPatternReading | null>(null);
+  const [aiLoading, setAiLoading] = useState(false);
+  const [aiNote, setAiNote] = useState<string | null>(null);
 
   const { data: profile } = useQuery({
     queryKey: ["profile"],
@@ -43,17 +54,54 @@ const Home = () => {
     enabled: !!user,
   });
 
-  const checkInMutation = useMutation({
-    mutationFn: (c: CheckInType) => saveCheckInCloud(user!.id, c),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["checkin"] });
-      queryClient.invalidateQueries({ queryKey: ["stats"] });
-    },
-    onError: () => toast.error("Couldn't save your check-in — please try again"),
+  const { data: aiRemaining } = useQuery({
+    queryKey: ["ai-remaining", todayKey()],
+    queryFn: () => fetchAiRemaining(user!.id),
+    enabled: !!user,
   });
 
   const checkIn = localCheckIn ?? cloudCheckIn ?? null;
   const archetype = getArchetype(profile?.archetype_id ?? undefined);
+  const reading = aiReading ?? cloudCheckIn?.ai_reading ?? null;
+
+  const requestReading = async (c: CheckInType) => {
+    if (!user) return;
+    setAiLoading(true);
+    setAiNote(null);
+    try {
+      const recent = await fetchRecentCheckIns(user.id, 7);
+      const res = await invokeAi<AiPatternReading>("pattern", {
+        feeling: c.feeling,
+        need: c.need,
+        archetypeName: archetype?.name,
+        archetypeTagline: archetype?.tagline,
+        recent,
+      });
+      if (res.result) {
+        setAiReading(res.result);
+        await saveCheckInReading(user.id, res.result);
+        queryClient.invalidateQueries({ queryKey: ["checkin"] });
+      } else {
+        setAiNote(aiErrorMessage(res.error ?? "unknown"));
+      }
+      queryClient.invalidateQueries({ queryKey: ["ai-remaining"] });
+    } catch {
+      setAiNote(aiErrorMessage("unknown"));
+    } finally {
+      setAiLoading(false);
+    }
+  };
+
+  const checkInMutation = useMutation({
+    mutationFn: (c: CheckInType) => saveCheckInCloud(user!.id, c),
+    onSuccess: (_data, c) => {
+      queryClient.invalidateQueries({ queryKey: ["checkin"] });
+      queryClient.invalidateQueries({ queryKey: ["stats"] });
+      requestReading(c);
+    },
+    onError: () => toast.error("Couldn't save your check-in — please try again"),
+  });
+
   const day = dayOfYear();
 
   const todaysRitual = archetype
@@ -63,7 +111,7 @@ const Home = () => {
 
   const discovery = getTodaysDiscovery(day);
   const featured = challenges.find((c) => c.featured) ?? challenges[0];
-  const pattern = checkIn ? readPattern(checkIn) : null;
+  const staticPattern = checkIn ? readPattern(checkIn) : null;
 
   const handleCheckIn = (c: CheckInType) => {
     setLocalCheckIn(c);
@@ -102,25 +150,95 @@ const Home = () => {
       </section>
 
       <section className="paper-card p-5">
-        <h2 className="mb-1 font-display text-lg font-semibold">
-          Your current rhythm
-        </h2>
-        {pattern ? (
-          <div className="animate-fade-up">
-            <p className="mt-2 inline-block rounded-full bg-primary px-3.5 py-1 text-sm font-semibold text-primary-foreground">
-              {pattern.name}
-            </p>
-            <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
-              {pattern.reading}
-            </p>
-          </div>
-        ) : checkInLoading ? (
+        <div className="mb-1 flex items-baseline justify-between gap-2">
+          <h2 className="font-display text-lg font-semibold">
+            Your current rhythm
+          </h2>
+          {typeof aiRemaining === "number" && (
+            <span className="text-[11px] text-muted-foreground">
+              ✨ {aiRemaining} AI reading{aiRemaining === 1 ? "" : "s"} left
+              today
+            </span>
+          )}
+        </div>
+
+        {checkInLoading ? (
           <p className="mt-3 text-sm text-muted-foreground">Loading…</p>
-        ) : (
+        ) : !checkIn ? (
           <div className="mt-3">
             <CheckIn onComplete={handleCheckIn} />
           </div>
+        ) : aiLoading ? (
+          <div className="mt-3 animate-fade-up rounded-2xl bg-jade-soft p-4">
+            <p className="text-sm font-medium text-primary">
+              ✨ Your companion is reading your pattern…
+            </p>
+            <div className="mt-3 space-y-2">
+              <div className="h-3 w-3/4 animate-pulse rounded-full bg-primary/15" />
+              <div className="h-3 w-full animate-pulse rounded-full bg-primary/10" />
+              <div className="h-3 w-2/3 animate-pulse rounded-full bg-primary/15" />
+            </div>
+          </div>
+        ) : reading ? (
+          <div className="animate-fade-up space-y-4">
+            <div>
+              <p className="mt-2 inline-block rounded-full bg-primary px-3.5 py-1 text-sm font-semibold text-primary-foreground">
+                ✨ {reading.patternName}
+              </p>
+              <p className="mt-3 text-sm leading-relaxed">{reading.reading}</p>
+            </div>
+            <TwoLenses
+              traditional={reading.traditional}
+              modern={reading.modern}
+              experiment={reading.experiment}
+            />
+          </div>
+        ) : (
+          <div className="animate-fade-up">
+            <p className="mt-2 inline-block rounded-full bg-primary px-3.5 py-1 text-sm font-semibold text-primary-foreground">
+              {staticPattern?.name}
+            </p>
+            <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
+              {staticPattern?.reading}
+            </p>
+            {aiNote && (
+              <p className="mt-3 rounded-xl bg-muted/70 px-3 py-2 text-xs text-muted-foreground">
+                {aiNote}
+              </p>
+            )}
+            {(aiRemaining ?? 0) > 0 && (
+              <Button
+                size="sm"
+                variant="outline"
+                className="mt-3 rounded-full"
+                onClick={() => checkIn && requestReading(checkIn)}
+              >
+                <Sparkles className="mr-1.5 h-3.5 w-3.5" />
+                Get your AI reading
+              </Button>
+            )}
+          </div>
         )}
+      </section>
+
+      <section className="paper-card overflow-hidden">
+        <Link
+          to="/plan"
+          className="flex items-center gap-4 p-5 transition-colors hover:bg-jade-soft/50"
+        >
+          <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-secondary">
+            <ScrollText className="h-5 w-5 text-primary" />
+          </span>
+          <div className="min-w-0 flex-1">
+            <h2 className="font-display text-lg font-semibold">
+              Your Yangsheng Plan
+            </h2>
+            <p className="text-sm text-muted-foreground">
+              A 7-day personal plan, crafted by AI around your rhythm.
+            </p>
+          </div>
+          <ArrowRight className="h-4 w-4 shrink-0 text-muted-foreground" />
+        </Link>
       </section>
 
       <section>

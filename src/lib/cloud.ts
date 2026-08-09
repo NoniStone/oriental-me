@@ -21,6 +21,7 @@ export interface CloudReflection {
   id: string;
   context: string;
   text: string;
+  ai_response: string | null;
   created_at: string;
 }
 
@@ -65,17 +66,44 @@ export const saveArchetype = async (
 
 // ---- Daily check-ins ----
 
+export interface CloudCheckIn extends CheckIn {
+  ai_reading: import("@/lib/ai").AiPatternReading | null;
+}
+
 export const fetchTodayCheckIn = async (
   userId: string,
-): Promise<CheckIn | null> => {
+): Promise<CloudCheckIn | null> => {
   const { data, error } = await supabase
     .from("check_ins")
-    .select("feeling, need")
+    .select("feeling, need, ai_reading")
     .eq("user_id", userId)
     .eq("date", todayKey())
     .maybeSingle();
   if (error) throw error;
-  return (data as CheckIn | null) ?? null;
+  return (data as CloudCheckIn | null) ?? null;
+};
+
+export const fetchRecentCheckIns = async (userId: string, limit = 7) => {
+  const { data, error } = await supabase
+    .from("check_ins")
+    .select("date, feeling, need")
+    .eq("user_id", userId)
+    .order("date", { ascending: false })
+    .limit(limit);
+  if (error) throw error;
+  return data ?? [];
+};
+
+export const saveCheckInReading = async (
+  userId: string,
+  reading: import("@/lib/ai").AiPatternReading,
+) => {
+  const { error } = await supabase
+    .from("check_ins")
+    .update({ ai_reading: reading })
+    .eq("user_id", userId)
+    .eq("date", todayKey());
+  if (error) throw error;
 };
 
 export const saveCheckInCloud = async (userId: string, checkIn: CheckIn) => {
@@ -116,7 +144,7 @@ export const markRitualDoneCloud = async (userId: string, ritualId: string) => {
 export const fetchReflections = async (userId: string, limit = 5) => {
   const { data, error } = await supabase
     .from("reflections")
-    .select("id, context, text, created_at")
+    .select("id, context, text, ai_response, created_at")
     .eq("user_id", userId)
     .order("created_at", { ascending: false })
     .limit(limit);
@@ -128,10 +156,24 @@ export const addReflectionCloud = async (
   userId: string,
   context: string,
   text: string,
+): Promise<string> => {
+  const { data, error } = await supabase
+    .from("reflections")
+    .insert({ user_id: userId, context, text })
+    .select("id")
+    .single();
+  if (error) throw error;
+  return data.id as string;
+};
+
+export const saveReflectionAiResponse = async (
+  reflectionId: string,
+  response: string,
 ) => {
   const { error } = await supabase
     .from("reflections")
-    .insert({ user_id: userId, context, text });
+    .update({ ai_response: response })
+    .eq("id", reflectionId);
   if (error) throw error;
 };
 
@@ -183,6 +225,52 @@ export const setChallengeDays = async (
     .update({ days_done: daysDone })
     .eq("user_id", userId)
     .eq("challenge_id", challengeId);
+  if (error) throw error;
+};
+
+// ---- Yangsheng Plan ----
+
+export interface PlanRow {
+  id: string;
+  inputs: Record<string, string>;
+  plan: import("@/lib/ai").AiPlan;
+  days_done: number[];
+  created_at: string;
+}
+
+export const fetchPlan = async (userId: string): Promise<PlanRow | null> => {
+  const { data, error } = await supabase
+    .from("yangsheng_plans")
+    .select("id, inputs, plan, days_done, created_at")
+    .eq("user_id", userId)
+    .maybeSingle();
+  if (error) throw error;
+  return (data as PlanRow | null) ?? null;
+};
+
+export const upsertPlan = async (
+  userId: string,
+  inputs: Record<string, string>,
+  plan: import("@/lib/ai").AiPlan,
+) => {
+  const { error } = await supabase.from("yangsheng_plans").upsert(
+    {
+      user_id: userId,
+      inputs,
+      plan,
+      days_done: [],
+      created_at: new Date().toISOString(),
+    },
+    { onConflict: "user_id" },
+  );
+  if (error) throw error;
+};
+
+export const setPlanDaysDone = async (userId: string, daysDone: number[]) => {
+  const { error } = await supabase
+    .from("yangsheng_plans")
+    .update({ days_done: daysDone })
+    .eq("user_id", userId);
   if (error) throw error;
 };
 

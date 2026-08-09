@@ -14,6 +14,7 @@ import Journey from "./pages/Journey";
 import Challenges from "./pages/Challenges";
 import ChallengeDetail from "./pages/ChallengeDetail";
 import Discover from "./pages/Discover";
+import Plan from "./pages/Plan";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -43,6 +44,7 @@ const App = () => (
               }
             />
             <Route path="/home" element={guarded(<Home />)} />
+            <Route path="/plan" element={guarded(<Plan />)} />
             <Route path="/journey" element={guarded(<Journey />)} />
             <Route path="/challenges" element={guarded(<Challenges />)} />
             <Route

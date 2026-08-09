@@ -199,6 +199,11 @@ const Journey = () => {
               <div key={r.id} className="paper-card p-4">
                 <p className="text-xs font-medium text-primary">{r.context}</p>
                 <p className="mt-1 text-sm leading-relaxed">{r.text}</p>
+                {r.ai_response && (
+                  <p className="mt-2 rounded-xl bg-jade-soft px-3 py-2 text-sm italic leading-relaxed text-secondary-foreground">
+                    🍃 {r.ai_response}
+                  </p>
+                )}
                 <p className="mt-2 text-xs text-muted-foreground">
                   {new Date(r.created_at).toLocaleDateString("en-GB", {
                     day: "numeric",
