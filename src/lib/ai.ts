@@ -58,7 +58,7 @@ export const aiErrorMessage = (error: string) => {
     case "limit_reached":
       return "You've used today's AI readings — they refresh tomorrow.";
     case "missing_key":
-      return "AI isn't configured yet — the GEMINI_API_KEY secret is missing.";
+      return "AI isn't configured yet — the DEEPSEEK_API_KEY secret is missing.";
     default:
       return "The AI couldn't respond just now — please try again.";
   }

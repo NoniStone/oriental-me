@@ -8,8 +8,7 @@ const corsHeaders = {
 };
 
 const DAILY_LIMIT = 3;
-const GEMINI_URL =
-  "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent";
+const DEEPSEEK_URL = "https://api.deepseek.com/chat/completions";
 
 const SYSTEM_PROMPT = `You are the AI companion inside "Oriental Me", a cultural wellness app that helps Western users explore Chinese Yangsheng (养生) culture through their own daily life.
 
@@ -142,46 +141,43 @@ serve(async (req) => {
       return json({ error: "limit_reached", remaining: 0 });
     }
 
-    const geminiKey = Deno.env.get("GEMINI_API_KEY");
-    if (!geminiKey) {
-      console.error("[ai-yangsheng] GEMINI_API_KEY not configured");
+    const apiKey = Deno.env.get("DEEPSEEK_API_KEY");
+    if (!apiKey) {
+      console.error("[ai-yangsheng] DEEPSEEK_API_KEY not configured");
       return json({ error: "missing_key" });
     }
 
-    const geminiRes = await fetch(GEMINI_URL, {
+    const aiRes = await fetch(DEEPSEEK_URL, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "x-goog-api-key": geminiKey,
+        Authorization: `Bearer ${apiKey}`,
       },
       body: JSON.stringify({
-        systemInstruction: { parts: [{ text: SYSTEM_PROMPT }] },
-        contents: [
-          { role: "user", parts: [{ text: buildPrompt(mode, payload ?? {}) }] },
+        model: "deepseek-chat",
+        messages: [
+          { role: "system", content: SYSTEM_PROMPT },
+          { role: "user", content: buildPrompt(mode, payload ?? {}) },
         ],
-        generationConfig: {
-          responseMimeType: "application/json",
-          temperature: 0.8,
-          maxOutputTokens: 8192,
-          thinkingConfig: { thinkingBudget: 0 },
-        },
+        response_format: { type: "json_object" },
+        temperature: 0.9,
+        max_tokens: 4000,
       }),
     });
 
-    if (!geminiRes.ok) {
-      const errText = await geminiRes.text();
-      console.error("[ai-yangsheng] gemini error", {
-        status: geminiRes.status,
+    if (!aiRes.ok) {
+      const errText = await aiRes.text();
+      console.error("[ai-yangsheng] deepseek error", {
+        status: aiRes.status,
         errText: errText.slice(0, 500),
       });
       return json({ error: "ai_failed" });
     }
 
-    const geminiData = await geminiRes.json();
-    const text: string | undefined =
-      geminiData?.candidates?.[0]?.content?.parts?.[0]?.text;
+    const aiData = await aiRes.json();
+    const text: string | undefined = aiData?.choices?.[0]?.message?.content;
     if (!text) {
-      console.error("[ai-yangsheng] empty gemini response");
+      console.error("[ai-yangsheng] empty deepseek response");
       return json({ error: "ai_failed" });
     }
 
@@ -189,7 +185,7 @@ serve(async (req) => {
     try {
       result = JSON.parse(text);
     } catch {
-      console.error("[ai-yangsheng] gemini returned non-JSON", {
+      console.error("[ai-yangsheng] deepseek returned non-JSON", {
         text: text.slice(0, 300),
       });
       return json({ error: "ai_failed" });
