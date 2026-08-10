@@ -9,7 +9,6 @@ import { fetchRituals } from "@/lib/content";
 import { fetchProfile, fetchReflections, fetchStats } from "@/lib/cloud";
 import { Copy, Sparkles } from "lucide-react";
 import { toast } from "sonner";
-import { JourneyToday } from "@/components/JourneyToday";
 import MemoryPanel from "@/components/MemoryPanel";
 
 const Journey = () => {
@@ -134,8 +133,6 @@ const Journey = () => {
           modern={archetype.modernLens}
         />
       </section>
-
-      <JourneyToday />
 
       <MemoryPanel />
 
