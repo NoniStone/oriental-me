@@ -8,11 +8,7 @@ import SeasonBanner from "@/components/SeasonBanner";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/components/auth/AuthProvider";
 import { getArchetype } from "@/data/archetypes";
-import {
-  fetchRituals,
-  fetchDiscoveries,
-  fetchChallenges,
-} from "@/lib/content";
+import { fetchRituals } from "@/lib/content";
 import {
   fetchProfile,
   fetchTodayCheckIn,
@@ -27,7 +23,7 @@ import {
   type AiPatternReading,
 } from "@/lib/ai";
 import { dayOfYear, todayKey, type CheckIn as CheckInType } from "@/lib/storage";
-import { ArrowRight, Sparkles, ScrollText } from "lucide-react";
+import { Sparkles } from "lucide-react";
 import { toast } from "sonner";
 import { JourneyToday } from "@/components/JourneyToday";
 
@@ -69,15 +65,6 @@ const Home = () => {
     queryFn: fetchRituals,
   });
 
-  const { data: discoveryList = [] } = useQuery({
-    queryKey: ["discoveries"],
-    queryFn: fetchDiscoveries,
-  });
-
-  const { data: challengeList = [] } = useQuery({
-    queryKey: ["challenges"],
-    queryFn: fetchChallenges,
-  });
 
   const checkIn = localCheckIn ?? cloudCheckIn ?? null;
   const archetype = getArchetype(profile?.archetype_id ?? undefined);
@@ -132,10 +119,6 @@ const Home = () => {
   const todaysRitual =
     ritualPool.length > 0 ? ritualPool[day % ritualPool.length] : null;
 
-  const discovery =
-    discoveryList.length > 0 ? discoveryList[day % discoveryList.length] : null;
-  const featured =
-    challengeList.find((c) => c.featured) ?? challengeList[0] ?? null;
   const staticPattern = checkIn ? readPattern(checkIn) : null;
 
   const handleCheckIn = (c: CheckInType) => {
@@ -250,26 +233,6 @@ const Home = () => {
 
       <JourneyToday />
 
-      <section className="paper-card overflow-hidden">
-        <Link
-          to="/plan"
-          className="flex items-center gap-4 p-5 transition-colors hover:bg-jade-soft/50"
-        >
-          <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-secondary">
-            <ScrollText className="h-5 w-5 text-primary" />
-          </span>
-          <div className="min-w-0 flex-1">
-            <h2 className="font-display text-lg font-semibold">
-              Your Yangsheng Plan
-            </h2>
-            <p className="text-sm text-muted-foreground">
-              A 7-day personal plan, crafted by AI around your rhythm.
-            </p>
-          </div>
-          <ArrowRight className="h-4 w-4 shrink-0 text-muted-foreground" />
-        </Link>
-      </section>
-
       {todaysRitual && (
         <section>
           <div className="mb-3 flex items-baseline justify-between">
@@ -284,67 +247,6 @@ const Home = () => {
         </section>
       )}
 
-      {discovery && (
-        <section>
-          <div className="mb-3">
-            <h2 className="font-display text-lg font-semibold">
-              Today's discovery
-            </h2>
-            <p className="text-xs text-muted-foreground">
-              One question, two lenses
-            </p>
-          </div>
-          <div className="paper-card p-5">
-            <h3 className="mb-4 font-display text-xl font-semibold leading-snug">
-              {discovery.question}
-            </h3>
-            <TwoLenses
-              traditional={discovery.traditional}
-              modern={discovery.modern}
-              experiment={discovery.experiment}
-              reflectPrompt={discovery.reflectPrompt}
-              reflectContext={`Discovery · ${discovery.question}`}
-            />
-          </div>
-        </section>
-      )}
-
-      {featured && (
-        <section>
-          <h2 className="mb-3 font-display text-lg font-semibold">
-            Challenge of the week
-          </h2>
-          <Link
-            to={`/challenges/${featured.id}`}
-            className="paper-card block overflow-hidden transition-transform hover:-translate-y-0.5"
-          >
-            <div className="bg-primary p-5 text-primary-foreground">
-              <p className="text-xs font-semibold uppercase tracking-wider opacity-80">
-                {featured.tag}
-              </p>
-              <h3 className="mt-1 font-display text-2xl font-semibold">
-                {featured.emoji} {featured.title}
-              </h3>
-              <p className="mt-2 text-sm leading-relaxed opacity-90">
-                {featured.summary}
-              </p>
-              <span className="mt-4 inline-flex items-center gap-1 rounded-full bg-primary-foreground/15 px-3.5 py-1.5 text-xs font-semibold">
-                {featured.durationDays} days · Join the challenge
-                <ArrowRight className="h-3.5 w-3.5" />
-              </span>
-            </div>
-          </Link>
-        </section>
-      )}
-
-      <section className="text-center">
-        <Button asChild variant="outline" className="rounded-full">
-          <Link to="/discover">
-            Explore Oriental Me Daily
-            <ArrowRight className="ml-1 h-4 w-4" />
-          </Link>
-        </Button>
-      </section>
     </div>
   );
 };
