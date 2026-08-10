@@ -29,6 +29,7 @@ import {
 import { dayOfYear, todayKey, type CheckIn as CheckInType } from "@/lib/storage";
 import { ArrowRight, Sparkles, ScrollText } from "lucide-react";
 import { toast } from "sonner";
+import { JourneyToday } from "@/components/JourneyToday";
 
 const greeting = () => {
   const hour = new Date().getHours();
@@ -246,6 +247,8 @@ const Home = () => {
           </div>
         )}
       </section>
+
+      <JourneyToday />
 
       <section className="paper-card overflow-hidden">
         <Link
