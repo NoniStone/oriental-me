@@ -1,4 +1,5 @@
 import { Link, NavLink, useLocation } from "react-router-dom";
+import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
   Sunrise,
@@ -10,6 +11,7 @@ import {
 import { useAuth } from "@/components/auth/AuthProvider";
 import { fetchProfile } from "@/lib/cloud";
 import { cn } from "@/lib/utils";
+import LaunchSequence from "@/components/LaunchSequence";
 
 const navItems = [
   { to: "/home", label: "Today", icon: Sunrise },
@@ -21,6 +23,7 @@ const navItems = [
 const AppLayout = ({ children }: { children: React.ReactNode }) => {
   const location = useLocation();
   const { user } = useAuth();
+  const [homeLaunchDone, setHomeLaunchDone] = useState(false);
 
   const { data: profile } = useQuery({
     queryKey: ["profile"],
@@ -28,8 +31,12 @@ const AppLayout = ({ children }: { children: React.ReactNode }) => {
     enabled: !!user,
   });
 
+  if (location.pathname === "/home" && !homeLaunchDone) {
+    return <LaunchSequence onComplete={() => setHomeLaunchDone(true)} />;
+  }
+
   return (
-    <div className="min-h-screen pb-28">
+    <div className="min-h-screen pb-28 page-enter">
       <header className="sticky top-0 z-40 border-b border-border/60 bg-background/85 backdrop-blur-md">
         <div className="mx-auto flex max-w-2xl items-center gap-3 px-5 py-3">
           <Link to="/" className="flex items-center gap-2.5">
