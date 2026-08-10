@@ -113,3 +113,14 @@ export const fetchTodayTaskCompletions = async (userId: string) => {
   if (error) throw error;
   return new Map((data ?? []).map((row) => [row.task_id, row.completed]));
 };
+
+export type MemoryItem = { id: string; kind: string; content: string; source: string; confidence: number; updated_at: string };
+export const fetchMemory = async (userId: string) => {
+  const { data, error } = await supabase.from("ai_memory_items").select("id,kind,content,source,confidence,updated_at").eq("user_id", userId).order("updated_at", { ascending: false }).limit(5);
+  if (error) throw error;
+  return (data ?? []) as MemoryItem[];
+};
+export const removeMemory = async (id: string) => {
+  const { error } = await supabase.from("ai_memory_items").delete().eq("id", id);
+  if (error) throw error;
+};
