@@ -1,7 +1,10 @@
+import { useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { useAuth } from "@/components/auth/AuthProvider";
 import { fetchChallengeById } from "@/lib/content";
 import {
@@ -12,11 +15,15 @@ import {
 import { cn } from "@/lib/utils";
 import { ArrowLeft, Check, Copy, PartyPopper } from "lucide-react";
 import { toast } from "sonner";
+import { uploadChallengeVideo } from "@/lib/media";
 
 const ChallengeDetail = () => {
   const { id } = useParams();
   const { user } = useAuth();
   const queryClient = useQueryClient();
+  const [video, setVideo] = useState<File | null>(null);
+  const [caption, setCaption] = useState("");
+  const [submitting, setSubmitting] = useState(false);
 
   const { data: challenge = null, isLoading: challengeLoading } = useQuery({
     queryKey: ["challenge-content", id],
@@ -56,6 +63,14 @@ const ChallengeDetail = () => {
     onSuccess: invalidate,
     onError: () => toast.error("Couldn't save — please try again"),
   });
+
+  const submitVideo = async () => {
+    if (!user || !challenge || !video) return;
+    setSubmitting(true);
+    try { await uploadChallengeVideo(user.id, challenge.id, video, caption); setVideo(null); setCaption(""); toast.success("Video submitted — it will appear in Social after Studio review."); }
+    catch (error) { toast.error((error as Error).message); }
+    finally { setSubmitting(false); }
+  };
 
   if (challengeLoading) {
     return (
@@ -196,6 +211,15 @@ const ChallengeDetail = () => {
           </p>
         )}
       </section>
+
+      {progress && (
+        <section className="paper-card space-y-3 p-5">
+          <div><h2 className="font-display text-lg font-semibold">Share your experiment</h2><p className="mt-1 text-sm text-muted-foreground">Upload a short Challenge moment. The Oriental Me Studio reviews every video before it reaches Social.</p></div>
+          <Input type="file" accept="video/*" onChange={(e) => setVideo(e.target.files?.[0] ?? null)} />
+          <Textarea value={caption} onChange={(e) => setCaption(e.target.value)} placeholder="What did you notice? Keep it playful, kind or beautifully ordinary." className="min-h-20 rounded-xl" />
+          <Button onClick={submitVideo} disabled={!video || submitting} className="w-full rounded-full">{submitting ? "Submitting…" : "Submit for Studio review"}</Button>
+        </section>
+      )}
 
       <section className="rounded-2xl bg-muted/70 p-4">
         <p className="text-xs leading-relaxed text-muted-foreground">

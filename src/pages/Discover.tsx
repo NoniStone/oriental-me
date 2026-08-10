@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
@@ -9,6 +10,7 @@ import {
 } from "@/components/ui/dialog";
 import EvidenceBadge from "@/components/EvidenceBadge";
 import { fetchArticles, type Article } from "@/lib/content";
+import { Button } from "@/components/ui/button";
 
 const Discover = () => {
   const [tab, setTab] = useState("all");
@@ -26,9 +28,9 @@ const Discover = () => {
       <section>
         <h1 className="text-3xl font-semibold tracking-tight">Discover</h1>
         <p className="mt-1 text-sm text-muted-foreground">
-          Oriental Me Daily — curated stories from Chinese wellness culture,
-          translated with context.
+          Go deeper only when you feel curious: a few stories and small experiments, translated with context.
         </p>
+        <Button asChild variant="outline" size="sm" className="mt-4 rounded-full"><Link to="/challenges">Try a guided challenge</Link></Button>
       </section>
 
       <Tabs value={tab} onValueChange={setTab}>

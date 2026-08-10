@@ -98,7 +98,48 @@
 }
 
 @layer utilities {
+  .page-enter { animation: page-enter 420ms cubic-bezier(.2,.8,.2,1) both; }
+  .app-shell-pending { opacity: 0; }
+  .landing-shell { overflow: hidden; }
   .paper-card {
     @apply rounded-3xl border border-border/70 bg-card shadow-[0_2px_16px_-6px_hsl(24_28%_16%/0.12)];
   }
+}
+
+.launch-screen {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  background: hsl(var(--background));
+  color: hsl(var(--primary));
+  animation: launch-exit .5s 1.9s ease-in forwards;
+}
+
+.launch-wash { position: absolute; border-radius: 999px; opacity: 0; filter: blur(2px); animation: wash-bloom 1.7s ease-out both; }
+.launch-wash-one { --wash-x: -58%; --wash-y: -58%; left: 50%; top: 50%; width: min(88vw, 38rem); aspect-ratio: 1; background: hsl(var(--secondary)); transform: translate(var(--wash-x), var(--wash-y)) scale(.2); }
+.launch-wash-two { --wash-x: -42%; --wash-y: -42%; left: 50%; top: 50%; width: min(65vw, 28rem); aspect-ratio: 1; background: hsl(var(--jade-soft)); transform: translate(var(--wash-x), var(--wash-y)) scale(.2); animation-delay: .2s; }
+.launch-brand { position: relative; z-index: 1; display: flex; flex-direction: column; align-items: center; }
+.launch-word { margin: 0; font-family: var(--font-display, Georgia, serif); font-size: clamp(2.1rem, 10vw, 4.6rem); font-weight: 600; letter-spacing: -.055em; line-height: 1; color: hsl(var(--foreground)); }
+.launch-word span { display: inline-block; opacity: 0; transform: translateX(-18px); animation: ink-letter .65s cubic-bezier(.2,.8,.2,1) forwards; }
+.launch-ink { margin: .5rem 0 0; font-family: Georgia, "Songti SC", serif; font-size: clamp(1.2rem, 5vw, 2rem); letter-spacing: .45em; padding-left: .45em; color: hsl(var(--terracotta)); opacity: 0; filter: blur(10px); transform: scaleX(.2); transform-origin: left; animation: ink-spread .9s .95s cubic-bezier(.2,.8,.2,1) forwards; }
+.launch-taiji { width: 3.7rem; margin-top: 1.7rem; opacity: 0; transform: scale(.3) rotate(-150deg); animation: taiji-arrive .9s 1.2s cubic-bezier(.2,.8,.2,1) forwards, taiji-turn 3.2s 2.1s linear infinite; }
+
+@keyframes wash-bloom { 0% { opacity: 0; } 45% { opacity: .6; } 100% { opacity: .38; transform: translate(var(--wash-x), var(--wash-y)) scale(1); } }
+@keyframes ink-letter { to { opacity: 1; transform: translateX(0); } }
+@keyframes ink-spread { 0% { opacity: 0; filter: blur(12px); transform: scaleX(.15); } 65% { opacity: 1; filter: blur(1px); } 100% { opacity: 1; filter: blur(0); transform: scaleX(1); } }
+@keyframes taiji-arrive { 0% { opacity: 0; transform: scale(.3) rotate(-150deg); } 100% { opacity: 1; transform: scale(1) rotate(0); } }
+@keyframes taiji-turn { to { transform: rotate(360deg); } }
+@keyframes launch-exit { to { opacity: 0; visibility: hidden; } }
+
+@media (prefers-reduced-motion: reduce) {
+  .launch-screen { animation: none; }
+  .launch-wash, .launch-word span, .launch-ink, .launch-taiji { animation: none; opacity: 1; transform: none; filter: none; }
+}
+
+@keyframes page-enter {
+  from { opacity: 0; transform: translate3d(18px, 10px, 0); }
+  to { opacity: 1; transform: translate3d(0, 0, 0); }
 }

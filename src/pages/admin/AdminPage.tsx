@@ -9,6 +9,8 @@ import ChallengesManager from "@/components/admin/ChallengesManager";
 import RitualsManager from "@/components/admin/RitualsManager";
 import DiscoveriesManager from "@/components/admin/DiscoveriesManager";
 import TrendRadar from "@/components/admin/TrendRadar";
+import AssetsManager from "@/components/admin/AssetsManager";
+import CommunityManager from "@/components/admin/CommunityManager";
 import { ShieldCheck } from "lucide-react";
 
 const AdminPage = () => (
@@ -41,6 +43,12 @@ const AdminPage = () => (
         <TabsTrigger value="trends" className="rounded-full px-3.5 py-1.5 text-sm">
           📡 Trend Radar
         </TabsTrigger>
+        <TabsTrigger value="assets" className="rounded-full px-3.5 py-1.5 text-sm">
+          Media
+        </TabsTrigger>
+        <TabsTrigger value="community" className="rounded-full px-3.5 py-1.5 text-sm">
+          Community
+        </TabsTrigger>
       </TabsList>
       <TabsContent value="articles" className="mt-5">
         <ArticlesManager />
@@ -56,6 +64,12 @@ const AdminPage = () => (
       </TabsContent>
       <TabsContent value="trends" className="mt-5">
         <TrendRadar />
+      </TabsContent>
+      <TabsContent value="assets" className="mt-5">
+        <AssetsManager />
+      </TabsContent>
+      <TabsContent value="community" className="mt-5">
+        <CommunityManager />
       </TabsContent>
     </Tabs>
   </div>

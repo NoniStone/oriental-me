@@ -18,9 +18,8 @@ import {
 import { useAuth } from "@/components/auth/AuthProvider";
 import { supabase } from "@/integrations/supabase/client";
 import { fetchProfile, updateDisplayName } from "@/lib/cloud";
-import { fetchAiRemaining, AI_DAILY_LIMIT } from "@/lib/ai";
-import { todayKey } from "@/lib/storage";
-import { KeyRound, LogOut, Mail, Sparkles, Trash2, UserRound } from "lucide-react";
+import { clearProfileIntake } from "@/lib/v2";
+import { KeyRound, LogOut, Mail, Trash2, UserRound } from "lucide-react";
 import { toast } from "sonner";
 
 const Settings = () => {
@@ -31,12 +30,6 @@ const Settings = () => {
   const { data: profile } = useQuery({
     queryKey: ["profile"],
     queryFn: () => fetchProfile(user!.id),
-    enabled: !!user,
-  });
-
-  const { data: aiRemaining } = useQuery({
-    queryKey: ["ai-remaining", todayKey()],
-    queryFn: () => fetchAiRemaining(user!.id),
     enabled: !!user,
   });
 
@@ -51,6 +44,7 @@ const Settings = () => {
   const [savingPassword, setSavingPassword] = useState(false);
 
   const [deleting, setDeleting] = useState(false);
+  const [clearingContext, setClearingContext] = useState(false);
 
   const displayName = name ?? profile?.display_name ?? "";
 
@@ -72,9 +66,10 @@ const Settings = () => {
     if (!newEmail.trim()) return;
     setSavingEmail(true);
     try {
-      const { error } = await supabase.auth.updateUser({
-        email: newEmail.trim(),
-      });
+      const { error } = await supabase.auth.updateUser(
+        { email: newEmail.trim() },
+        { emailRedirectTo: `${window.location.origin}/settings` },
+      );
       if (error) throw error;
       toast.success(
         "Confirmation emails sent — check both your old and new inbox to confirm the change.",
@@ -84,6 +79,20 @@ const Settings = () => {
       toast.error((err as Error).message);
     } finally {
       setSavingEmail(false);
+    }
+  };
+
+  const clearPersonalContext = async () => {
+    if (!user) return;
+    setClearingContext(true);
+    try {
+      await clearProfileIntake(user.id);
+      queryClient.removeQueries({ queryKey: ["profile-intake"] });
+      toast.success("Optional personal context deleted.");
+    } catch {
+      toast.error("Couldn't delete personal context — please try again.");
+    } finally {
+      setClearingContext(false);
     }
   };
 
@@ -172,6 +181,33 @@ const Settings = () => {
       </section>
 
       <section className="paper-card p-5">
+        <div className="mb-2 flex items-center gap-2">
+          <Trash2 className="h-4 w-4 text-primary" />
+          <h2 className="font-display text-lg font-semibold">Personal context</h2>
+        </div>
+        <p className="text-sm leading-relaxed text-muted-foreground">
+          Your optional birth details, interests and daily rhythm help personalise your Journey. They are shared with your companion only when you choose to use it.
+        </p>
+        <AlertDialog>
+          <AlertDialogTrigger asChild>
+            <Button variant="outline" className="mt-4 rounded-full" disabled={clearingContext}>
+              {clearingContext ? "Deleting…" : "Delete optional context"}
+            </Button>
+          </AlertDialogTrigger>
+          <AlertDialogContent className="rounded-3xl">
+            <AlertDialogHeader>
+              <AlertDialogTitle className="font-display">Delete optional context?</AlertDialogTitle>
+              <AlertDialogDescription>This removes your birth details, interests and rhythm preferences. Your account, check-ins and reflections stay untouched.</AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel className="rounded-full">Keep it</AlertDialogCancel>
+              <AlertDialogAction onClick={clearPersonalContext} className="rounded-full bg-destructive text-destructive-foreground hover:bg-destructive/90">Delete context</AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+      </section>
+
+      <section className="paper-card p-5">
         <div className="mb-4 flex items-center gap-2">
           <Mail className="h-4 w-4 text-primary" />
           <h2 className="font-display text-lg font-semibold">Email</h2>
@@ -247,17 +283,6 @@ const Settings = () => {
             {savingPassword ? "Updating…" : "Update password"}
           </Button>
         </div>
-      </section>
-
-      <section className="paper-card p-5">
-        <div className="mb-2 flex items-center gap-2">
-          <Sparkles className="h-4 w-4 text-primary" />
-          <h2 className="font-display text-lg font-semibold">AI usage</h2>
-        </div>
-        <p className="text-sm text-muted-foreground">
-          {aiRemaining ?? AI_DAILY_LIMIT} of {AI_DAILY_LIMIT} AI calls left
-          today. The allowance refreshes every day.
-        </p>
       </section>
 
       <section className="space-y-3">

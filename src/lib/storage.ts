@@ -31,7 +31,13 @@ const read = <T>(key: string): T | null => {
   }
 };
 
-export const todayKey = () => new Date().toISOString().slice(0, 10);
+// A "daily" product should follow the user's calendar, not UTC midnight.
+export const todayKey = () => {
+  const now = new Date();
+  const month = String(now.getMonth() + 1).padStart(2, "0");
+  const day = String(now.getDate()).padStart(2, "0");
+  return `${now.getFullYear()}-${month}-${day}`;
+};
 
 export const dayOfYear = () => {
   const now = new Date();

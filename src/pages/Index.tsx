@@ -1,7 +1,9 @@
-import { Link } from "react-router-dom";
+import { useState } from "react";
+import { Link, Navigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/components/auth/AuthProvider";
 import { ArrowRight, Sparkles, Leaf, Compass } from "lucide-react";
+import LaunchSequence from "@/components/LaunchSequence";
 
 const features = [
   {
@@ -22,7 +24,13 @@ const features = [
 ];
 
 const Index = () => {
-  const { session } = useAuth();
+  const { session, loading } = useAuth();
+  const [introDone, setIntroDone] = useState(false);
+
+  if (loading) return <LaunchSequence onComplete={() => setIntroDone(true)} />;
+
+  if (session) return <Navigate to="/home" replace />;
+  if (!introDone) return <LaunchSequence onComplete={() => setIntroDone(true)} />;
 
   return (
     <div className="min-h-screen">
@@ -51,32 +59,13 @@ const Index = () => {
             A way of noticing.
           </p>
 
-          <div className="mt-7 flex flex-col gap-3 sm:flex-row">
-            {session ? (
-              <>
-                <Button asChild size="lg" className="rounded-full">
-                  <Link to="/home">
-                    Continue your journey
-                    <ArrowRight className="ml-1 h-4 w-4" />
-                  </Link>
-                </Button>
-                <Button asChild size="lg" variant="outline" className="rounded-full">
-                  <Link to="/quiz">Retake the quiz</Link>
-                </Button>
-              </>
-            ) : (
-              <>
-                <Button asChild size="lg" className="rounded-full">
-                  <Link to="/login">
-                    Discover your archetype
-                    <ArrowRight className="ml-1 h-4 w-4" />
-                  </Link>
-                </Button>
-                <Button asChild size="lg" variant="outline" className="rounded-full">
-                  <Link to="/login">Sign in</Link>
-                </Button>
-              </>
-            )}
+          <div className="mt-7">
+            <Button asChild size="lg" className="rounded-full">
+              <Link to="/login">
+                Start your rhythm
+                <ArrowRight className="ml-1 h-4 w-4" />
+              </Link>
+            </Button>
           </div>
         </div>
 

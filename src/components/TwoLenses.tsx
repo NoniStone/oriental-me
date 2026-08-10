@@ -4,7 +4,8 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { useAuth } from "@/components/auth/AuthProvider";
 import { addReflectionCloud, saveReflectionAiResponse } from "@/lib/cloud";
-import { invokeAi, aiErrorMessage } from "@/lib/ai";
+import { aiErrorMessage } from "@/lib/ai";
+import { invokeAgent } from "@/lib/v2";
 import { Sparkles } from "lucide-react";
 import { toast } from "sonner";
 
@@ -54,15 +55,15 @@ const TwoLenses = ({
     if (!savedId) return;
     setAiLoading(true);
     try {
-      const res = await invokeAi<{ response: string }>("reflection", {
+      const res = await invokeAgent<{ response: string }>("reflection", {
         context: reflectContext,
         text: savedText,
       });
-      queryClient.invalidateQueries({ queryKey: ["ai-remaining"] });
       if (res.result?.response) {
         setAiResponse(res.result.response);
         await saveReflectionAiResponse(savedId, res.result.response);
         queryClient.invalidateQueries({ queryKey: ["reflections"] });
+        queryClient.invalidateQueries({ queryKey: ["ai-memory"] });
       } else {
         toast.error(aiErrorMessage(res.error ?? "unknown"));
       }

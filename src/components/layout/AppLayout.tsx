@@ -1,9 +1,9 @@
 import { Link, NavLink, useLocation } from "react-router-dom";
+import { useCallback, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
   Sunrise,
   Compass,
-  Flag,
   CircleUser,
   Settings as SettingsIcon,
   ShieldCheck,
@@ -11,18 +11,20 @@ import {
 import { useAuth } from "@/components/auth/AuthProvider";
 import { fetchProfile } from "@/lib/cloud";
 import { cn } from "@/lib/utils";
+import LaunchSequence from "@/components/LaunchSequence";
 
 const navItems = [
   { to: "/home", label: "Today", icon: Sunrise },
-  { to: "/discover", label: "Discover", icon: Compass },
-  { to: "/challenges", label: "Challenges", icon: Flag },
-  { to: "/journey", label: "Journey", icon: CircleUser },
+  { to: "/discover", label: "Explore", icon: Compass },
+  { to: "/journey", label: "My rhythm", icon: CircleUser },
   { to: "/settings", label: "Settings", icon: SettingsIcon },
 ];
 
 const AppLayout = ({ children }: { children: React.ReactNode }) => {
   const location = useLocation();
   const { user } = useAuth();
+  const [homeLaunchDone, setHomeLaunchDone] = useState(false);
+  const finishHomeLaunch = useCallback(() => setHomeLaunchDone(true), []);
 
   const { data: profile } = useQuery({
     queryKey: ["profile"],
@@ -30,8 +32,11 @@ const AppLayout = ({ children }: { children: React.ReactNode }) => {
     enabled: !!user,
   });
 
+  const isHomeLaunching = location.pathname === "/home" && !homeLaunchDone;
+
   return (
-    <div className="min-h-screen pb-28">
+    <>
+      <div className={cn("min-h-screen pb-28", isHomeLaunching ? "app-shell-pending" : "page-enter")}>
       <header className="sticky top-0 z-40 border-b border-border/60 bg-background/85 backdrop-blur-md">
         <div className="mx-auto flex max-w-2xl items-center gap-3 px-5 py-3">
           <Link to="/" className="flex items-center gap-2.5">
@@ -69,7 +74,7 @@ const AppLayout = ({ children }: { children: React.ReactNode }) => {
       </main>
 
       <nav className="fixed inset-x-0 bottom-0 z-40 border-t border-border/60 bg-background/90 backdrop-blur-md">
-        <div className="mx-auto grid max-w-2xl grid-cols-5 px-2 pb-[env(safe-area-inset-bottom)]">
+        <div className="mx-auto grid max-w-2xl grid-cols-4 px-2 pb-[env(safe-area-inset-bottom)]">
           {navItems.map(({ to, label, icon: Icon }) => (
             <NavLink
               key={to}
@@ -100,7 +105,10 @@ const AppLayout = ({ children }: { children: React.ReactNode }) => {
           ))}
         </div>
       </nav>
-    </div>
+
+      </div>
+      {isHomeLaunching && <LaunchSequence onComplete={finishHomeLaunch} />}
+    </>
   );
 };
 
