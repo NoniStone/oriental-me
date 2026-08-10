@@ -5,23 +5,15 @@ import CheckIn, { readPattern } from "@/components/CheckIn";
 import RitualCard from "@/components/RitualCard";
 import TwoLenses from "@/components/TwoLenses";
 import SeasonBanner from "@/components/SeasonBanner";
-import { Button } from "@/components/ui/button";
 import { useAuth } from "@/components/auth/AuthProvider";
 import { getArchetype } from "@/data/archetypes";
 import { fetchRituals } from "@/lib/content";
 import {
   fetchProfile,
   fetchTodayCheckIn,
-  fetchRecentCheckIns,
   saveCheckInCloud,
-  saveCheckInReading,
 } from "@/lib/cloud";
-import {
-  invokeAi,
-  fetchAiRemaining,
-  aiErrorMessage,
-  type AiPatternReading,
-} from "@/lib/ai";
+import { invokeAgent } from "@/lib/v2";
 import { dayOfYear, todayKey, type CheckIn as CheckInType } from "@/lib/storage";
 import { Sparkles } from "lucide-react";
 import { toast } from "sonner";
@@ -38,7 +30,6 @@ const Home = () => {
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const [localCheckIn, setLocalCheckIn] = useState<CheckInType | null>(null);
-  const [aiReading, setAiReading] = useState<AiPatternReading | null>(null);
   const [aiLoading, setAiLoading] = useState(false);
   const [aiNote, setAiNote] = useState<string | null>(null);
 
@@ -54,12 +45,6 @@ const Home = () => {
     enabled: !!user,
   });
 
-  const { data: aiRemaining } = useQuery({
-    queryKey: ["ai-remaining", todayKey()],
-    queryFn: () => fetchAiRemaining(user!.id),
-    enabled: !!user,
-  });
-
   const { data: ritualList = [] } = useQuery({
     queryKey: ["rituals"],
     queryFn: fetchRituals,
@@ -68,31 +53,17 @@ const Home = () => {
 
   const checkIn = localCheckIn ?? cloudCheckIn ?? null;
   const archetype = getArchetype(profile?.archetype_id ?? undefined);
-  const reading = aiReading ?? cloudCheckIn?.ai_reading ?? null;
+  const reading = cloudCheckIn?.ai_reading ?? null;
 
   const requestReading = async (c: CheckInType) => {
     if (!user) return;
     setAiLoading(true);
     setAiNote(null);
     try {
-      const recent = await fetchRecentCheckIns(user.id, 7);
-      const res = await invokeAi<AiPatternReading>("pattern", {
-        feeling: c.feeling,
-        need: c.need,
-        archetypeName: archetype?.name,
-        archetypeTagline: archetype?.tagline,
-        recent,
-      });
-      if (res.result) {
-        setAiReading(res.result);
-        await saveCheckInReading(user.id, res.result);
-        queryClient.invalidateQueries({ queryKey: ["checkin"] });
-      } else {
-        setAiNote(aiErrorMessage(res.error ?? "unknown"));
-      }
-      queryClient.invalidateQueries({ queryKey: ["ai-remaining"] });
+      await invokeAgent("daily", { timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone, feeling: c.feeling, need: c.need });
+      queryClient.invalidateQueries({ queryKey: ["daily-recommendation"] });
     } catch {
-      setAiNote(aiErrorMessage("unknown"));
+      setAiNote("Your Journey could not be prepared just now — please try again shortly.");
     } finally {
       setAiLoading(false);
     }
@@ -164,12 +135,6 @@ const Home = () => {
           <h2 className="font-display text-lg font-semibold">
             Your current rhythm
           </h2>
-          {typeof aiRemaining === "number" && (
-            <span className="text-[11px] text-muted-foreground">
-              ✨ {aiRemaining} AI reading{aiRemaining === 1 ? "" : "s"} left
-              today
-            </span>
-          )}
         </div>
 
         {checkInLoading ? (
@@ -181,7 +146,7 @@ const Home = () => {
         ) : aiLoading ? (
           <div className="mt-3 animate-fade-up rounded-2xl bg-jade-soft p-4">
             <p className="text-sm font-medium text-primary">
-              ✨ Your companion is reading your pattern…
+              ✨ Your companion is connecting today with what it knows about you…
             </p>
             <div className="mt-3 space-y-2">
               <div className="h-3 w-3/4 animate-pulse rounded-full bg-primary/15" />
@@ -215,17 +180,6 @@ const Home = () => {
               <p className="mt-3 rounded-xl bg-muted/70 px-3 py-2 text-xs text-muted-foreground">
                 {aiNote}
               </p>
-            )}
-            {(aiRemaining ?? 0) > 0 && (
-              <Button
-                size="sm"
-                variant="outline"
-                className="mt-3 rounded-full"
-                onClick={() => checkIn && requestReading(checkIn)}
-              >
-                <Sparkles className="mr-1.5 h-3.5 w-3.5" />
-                Get your AI reading
-              </Button>
             )}
           </div>
         )}
