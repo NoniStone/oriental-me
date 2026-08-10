@@ -5,6 +5,8 @@ import { useAuth } from "@/components/auth/AuthProvider";
 import { fetchChallenges } from "@/lib/content";
 import { fetchChallengeProgressAll } from "@/lib/cloud";
 import { ArrowRight } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { ChallengeCommunity } from "@/pages/Social";
 
 const Challenges = () => {
   const { user } = useAuth();
@@ -42,6 +44,12 @@ const Challenges = () => {
         </p>
       </section>
 
+      <Tabs defaultValue="challenges">
+        <TabsList className="rounded-full bg-muted p-1">
+          <TabsTrigger value="challenges" className="rounded-full px-4">Challenges</TabsTrigger>
+          <TabsTrigger value="community" className="rounded-full px-4">🎬 Community</TabsTrigger>
+        </TabsList>
+        <TabsContent value="challenges" className="mt-6 space-y-8">
       {featured && (
         <Link
           to={`/challenges/${featured.id}`}
@@ -108,6 +116,12 @@ const Challenges = () => {
           );
         })}
       </section>
+        </TabsContent>
+        <TabsContent value="community" className="mt-6">
+          <div className="mb-5"><h2 className="font-display text-xl font-semibold">Challenge Community</h2><p className="mt-1 text-sm text-muted-foreground">The memorable, ordinary moments Studio has chosen to share.</p></div>
+          <ChallengeCommunity />
+        </TabsContent>
+      </Tabs>
     </div>
   );
 };
