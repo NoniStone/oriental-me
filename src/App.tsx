@@ -18,6 +18,7 @@ import ChallengeDetail from "./pages/ChallengeDetail";
 import Discover from "./pages/Discover";
 import Plan from "./pages/Plan";
 import Settings from "./pages/Settings";
+import ProfileIntake from "./pages/ProfileIntake";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -38,6 +39,7 @@ const App = () => (
           <Routes>
             <Route path="/" element={<Index />} />
             <Route path="/login" element={<Login />} />
+            <Route path="/onboarding" element={<ProtectedRoute><ProfileIntake /></ProtectedRoute>} />
             <Route
               path="/quiz"
               element={
