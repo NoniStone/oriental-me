@@ -4,6 +4,7 @@ import {
   Sunrise,
   Compass,
   Flag,
+  Clapperboard,
   CircleUser,
   Settings as SettingsIcon,
   ShieldCheck,
@@ -16,6 +17,7 @@ const navItems = [
   { to: "/home", label: "Today", icon: Sunrise },
   { to: "/discover", label: "Discover", icon: Compass },
   { to: "/challenges", label: "Challenges", icon: Flag },
+  { to: "/social", label: "Social", icon: Clapperboard },
   { to: "/journey", label: "Journey", icon: CircleUser },
   { to: "/settings", label: "Settings", icon: SettingsIcon },
 ];
@@ -69,7 +71,7 @@ const AppLayout = ({ children }: { children: React.ReactNode }) => {
       </main>
 
       <nav className="fixed inset-x-0 bottom-0 z-40 border-t border-border/60 bg-background/90 backdrop-blur-md">
-        <div className="mx-auto grid max-w-2xl grid-cols-5 px-2 pb-[env(safe-area-inset-bottom)]">
+        <div className="mx-auto grid max-w-2xl grid-cols-6 px-2 pb-[env(safe-area-inset-bottom)]">
           {navItems.map(({ to, label, icon: Icon }) => (
             <NavLink
               key={to}
