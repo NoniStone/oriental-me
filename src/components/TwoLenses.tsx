@@ -5,6 +5,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { useAuth } from "@/components/auth/AuthProvider";
 import { addReflectionCloud, saveReflectionAiResponse } from "@/lib/cloud";
 import { invokeAi, aiErrorMessage } from "@/lib/ai";
+import { invokeAgent } from "@/lib/v2";
 import { Sparkles } from "lucide-react";
 import { toast } from "sonner";
 
@@ -37,6 +38,7 @@ const TwoLenses = ({
     setSaving(true);
     try {
       const id = await addReflectionCloud(user.id, reflectContext, text.trim());
+      await invokeAgent("feedback", { source: "reflection", context: reflectContext, text: text.trim() }).catch(() => undefined);
       queryClient.invalidateQueries({ queryKey: ["reflections"] });
       queryClient.invalidateQueries({ queryKey: ["stats"] });
       setSavedId(id);
