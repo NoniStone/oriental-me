@@ -1,4 +1,4 @@
-import { Link } from "react-router-dom";
+import { Link, Navigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/components/auth/AuthProvider";
 import { ArrowRight, Sparkles, Leaf, Compass } from "lucide-react";
@@ -22,7 +22,13 @@ const features = [
 ];
 
 const Index = () => {
-  const { session } = useAuth();
+  const { session, loading } = useAuth();
+
+  if (loading) {
+    return <div className="flex min-h-screen items-center justify-center"><img src="/assets/logo.png" alt="" className="h-12 w-12 animate-pulse rounded-full" /></div>;
+  }
+
+  if (session) return <Navigate to="/home" replace />;
 
   return (
     <div className="min-h-screen">
@@ -51,32 +57,13 @@ const Index = () => {
             A way of noticing.
           </p>
 
-          <div className="mt-7 flex flex-col gap-3 sm:flex-row">
-            {session ? (
-              <>
-                <Button asChild size="lg" className="rounded-full">
-                  <Link to="/home">
-                    Continue your journey
-                    <ArrowRight className="ml-1 h-4 w-4" />
-                  </Link>
-                </Button>
-                <Button asChild size="lg" variant="outline" className="rounded-full">
-                  <Link to="/quiz">Retake the quiz</Link>
-                </Button>
-              </>
-            ) : (
-              <>
-                <Button asChild size="lg" className="rounded-full">
-                  <Link to="/login">
-                    Discover your archetype
-                    <ArrowRight className="ml-1 h-4 w-4" />
-                  </Link>
-                </Button>
-                <Button asChild size="lg" variant="outline" className="rounded-full">
-                  <Link to="/login">Sign in</Link>
-                </Button>
-              </>
-            )}
+          <div className="mt-7">
+            <Button asChild size="lg" className="rounded-full">
+              <Link to="/login">
+                Start your rhythm
+                <ArrowRight className="ml-1 h-4 w-4" />
+              </Link>
+            </Button>
           </div>
         </div>
 
