@@ -1,1 +1,1 @@
-# Welcome to your Dyad app
+# This is Oriental Me
