@@ -19,6 +19,7 @@ import Discover from "./pages/Discover";
 import Plan from "./pages/Plan";
 import Settings from "./pages/Settings";
 import ProfileIntake from "./pages/ProfileIntake";
+import Social from "./pages/Social";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -57,6 +58,7 @@ const App = () => (
               element={guarded(<ChallengeDetail />)}
             />
             <Route path="/discover" element={guarded(<Discover />)} />
+            <Route path="/social" element={guarded(<Social />)} />
             <Route path="/settings" element={guarded(<Settings />)} />
             <Route
               path="/admin"
