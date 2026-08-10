@@ -1,5 +1,5 @@
 import { Link, NavLink, useLocation } from "react-router-dom";
-import { useState } from "react";
+import { useCallback, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
   Sunrise,
@@ -24,6 +24,7 @@ const AppLayout = ({ children }: { children: React.ReactNode }) => {
   const location = useLocation();
   const { user } = useAuth();
   const [homeLaunchDone, setHomeLaunchDone] = useState(false);
+  const finishHomeLaunch = useCallback(() => setHomeLaunchDone(true), []);
 
   const { data: profile } = useQuery({
     queryKey: ["profile"],
@@ -32,7 +33,7 @@ const AppLayout = ({ children }: { children: React.ReactNode }) => {
   });
 
   if (location.pathname === "/home" && !homeLaunchDone) {
-    return <LaunchSequence onComplete={() => setHomeLaunchDone(true)} />;
+    return <LaunchSequence onComplete={finishHomeLaunch} />;
   }
 
   return (
