@@ -30,7 +30,7 @@ const Login = () => {
   const [busy, setBusy] = useState(false);
 
   useEffect(() => {
-    if (session) navigate("/home");
+    if (session) navigate("/onboarding");
   }, [session, navigate]);
 
   const submit = async (e: React.FormEvent) => {
