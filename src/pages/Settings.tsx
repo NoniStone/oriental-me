@@ -18,9 +18,7 @@ import {
 import { useAuth } from "@/components/auth/AuthProvider";
 import { supabase } from "@/integrations/supabase/client";
 import { fetchProfile, updateDisplayName } from "@/lib/cloud";
-import { fetchAiRemaining, AI_DAILY_LIMIT } from "@/lib/ai";
-import { todayKey } from "@/lib/storage";
-import { KeyRound, LogOut, Mail, Sparkles, Trash2, UserRound } from "lucide-react";
+import { KeyRound, LogOut, Mail, Trash2, UserRound } from "lucide-react";
 import { toast } from "sonner";
 
 const Settings = () => {
@@ -31,12 +29,6 @@ const Settings = () => {
   const { data: profile } = useQuery({
     queryKey: ["profile"],
     queryFn: () => fetchProfile(user!.id),
-    enabled: !!user,
-  });
-
-  const { data: aiRemaining } = useQuery({
-    queryKey: ["ai-remaining", todayKey()],
-    queryFn: () => fetchAiRemaining(user!.id),
     enabled: !!user,
   });
 
@@ -247,17 +239,6 @@ const Settings = () => {
             {savingPassword ? "Updating…" : "Update password"}
           </Button>
         </div>
-      </section>
-
-      <section className="paper-card p-5">
-        <div className="mb-2 flex items-center gap-2">
-          <Sparkles className="h-4 w-4 text-primary" />
-          <h2 className="font-display text-lg font-semibold">AI usage</h2>
-        </div>
-        <p className="text-sm text-muted-foreground">
-          {aiRemaining ?? AI_DAILY_LIMIT} of {AI_DAILY_LIMIT} AI calls left
-          today. The allowance refreshes every day.
-        </p>
       </section>
 
       <section className="space-y-3">
