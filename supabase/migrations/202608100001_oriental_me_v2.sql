@@ -36,7 +36,7 @@ create table if not exists public.media_assets (
 );
 create table if not exists public.challenge_submissions (
   id uuid primary key default gen_random_uuid(), user_id uuid not null references auth.users(id) on delete cascade,
-  challenge_id uuid not null references public.challenges(id) on delete cascade, media_asset_id uuid references public.media_assets(id) on delete set null,
+  challenge_id text not null references public.challenges(id) on delete cascade, media_asset_id uuid references public.media_assets(id) on delete set null,
   caption text, status text not null default 'pending' check (status in ('pending','approved','rejected','featured')),
   submitted_at timestamptz not null default now(), reviewed_at timestamptz, reviewed_by uuid references auth.users(id)
 );
