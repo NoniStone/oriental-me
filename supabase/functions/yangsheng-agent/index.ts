@@ -17,7 +17,7 @@ serve(async (req) => {
     if (!user) return json({ error: "unauthorized" }, 401);
     const admin = createClient(url, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
     const { action, payload = {} } = await req.json();
-    if (!['profile','daily','feedback','reflection'].includes(action)) return json({ error: "bad_action" }, 400);
+    if (!['profile','daily','feedback','reflection','review'].includes(action)) return json({ error: "bad_action" }, 400);
     const today = new Intl.DateTimeFormat('en-CA', { timeZone: String(payload.timeZone || 'UTC') }).format(new Date());
     if (action === 'daily') {
       const { data: existing } = await admin.from('daily_recommendations').select('*').eq('user_id', user.id).eq('date', today).maybeSingle();
@@ -36,6 +36,8 @@ serve(async (req) => {
       ? `Using this unified user context, create today's recommendation. Return {"headline":"...","observation":"...","recommendation":"...","gentleHumour":"...","tasks":[{"id":"short-slug","title":"...","detail":"...","category":"morning|food|movement|evening|reflection"}]}. Make exactly 3 practical tasks. Context: ${JSON.stringify(context)}`
       : action === 'reflection'
       ? `Respond to the user's reflection warmly in 1-2 sentences, then extract up to 2 durable non-medical memories. Return {"response":"...","memories":[{"kind":"reflection|preference|pattern","content":"...","confidence":0.0}]}. Context: ${JSON.stringify(context)}`
+      : action === 'review'
+      ? `Create a concise personal weekly rhythm review from this unified context. Return {"title":"...","summary":"2-3 sentences","pattern":"one observed non-medical pattern","experiment":"one gentle experiment for next week"}. Context: ${JSON.stringify(context)}`
       : `Extract only durable, useful, non-medical personalization facts from this context. Return {"memories":[{"kind":"profile|pattern|preference|reflection|completion","content":"...","confidence":0.0}]}. Do not repeat sensitive birth details. Context: ${JSON.stringify(context)}`;
     const ai = await fetch('https://api.deepseek.com/chat/completions', { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${Deno.env.get('DEEPSEEK_API_KEY')}` }, body: JSON.stringify({ model: 'deepseek-chat', response_format: { type: 'json_object' }, temperature: 0.65, messages: [{ role: 'system', content: system }, { role: 'user', content: requested }] }) });
     if (!ai.ok) return json({ error: 'ai_failed' }, 502);
@@ -48,6 +50,6 @@ serve(async (req) => {
     }
     const memories = Array.isArray(parsed.memories) ? parsed.memories.slice(0, 5) : [];
     if (memories.length) await admin.from('ai_memory_items').insert(memories.map((m: { kind: string; content: string; confidence: number }) => ({ user_id: user.id, kind: m.kind, content: m.content, confidence: m.confidence, source: action })));
-    return json({ result: action === 'reflection' ? { response: parsed.response, saved: memories.length } : { saved: memories.length } });
+    return json({ result: action === 'reflection' ? { response: parsed.response, saved: memories.length } : action === 'review' ? parsed : { saved: memories.length } });
   } catch (error) { console.error(error); return json({ error: 'unexpected' }, 500); }
 });
