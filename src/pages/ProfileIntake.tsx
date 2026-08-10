@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useAuth } from "@/components/auth/AuthProvider";
-import { saveProfileIntake, type ProfileIntake } from "@/lib/v2";
+import { invokeAgent, saveProfileIntake, type ProfileIntake } from "@/lib/v2";
 
 const interests = ["Tea & food", "Walking without a destination", "Night owls", "Movement", "Books & quiet", "Friends & gatherings", "Nature", "Making things", "Screens & games", "Trying new places"];
 const rhythms = ["Mostly predictable", "Shift work", "Study-led", "Caregiving", "Always changing"];
@@ -21,7 +21,7 @@ const ProfileIntakePage = () => {
   const finish = async () => {
     if (!user || !form.consentGiven) return;
     setSaving(true);
-    try { await saveProfileIntake(user.id, form); navigate("/quiz"); } finally { setSaving(false); }
+    try { await saveProfileIntake(user.id, form); await invokeAgent("profile", { source: "profile_intake" }).catch(() => undefined); navigate("/quiz"); } finally { setSaving(false); }
   };
   return <div className="mx-auto min-h-screen max-w-lg px-5 py-8 page-enter">
     <p className="text-xs font-semibold uppercase tracking-wider text-primary">Build your living profile · {step + 1}/3</p>
