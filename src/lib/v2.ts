@@ -68,7 +68,7 @@ export const fetchProfileIntake = async (userId: string): Promise<ProfileIntake 
 };
 
 export const invokeAgent = async <T>(
-  action: "profile" | "daily" | "feedback" | "reflection",
+  action: "profile" | "daily" | "feedback" | "reflection" | "review",
   payload: Record<string, unknown>,
 ) => {
   const { data, error } = await supabase.functions.invoke("yangsheng-agent", {
