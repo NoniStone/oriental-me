@@ -329,9 +329,10 @@ export const migrateLocalData = async (userId: string) => {
     ([date, c]) => ({ user_id: userId, date, feeling: c.feeling, need: c.need }),
   );
   if (checkInRows.length > 0) {
-    await supabase
+    const { error } = await supabase
       .from("check_ins")
       .upsert(checkInRows, { onConflict: "user_id,date", ignoreDuplicates: true });
+    if (error) throw error;
   }
 
   const ritualRows = getLocalRitualDates().map((date) => ({
@@ -339,9 +340,10 @@ export const migrateLocalData = async (userId: string) => {
     date,
   }));
   if (ritualRows.length > 0) {
-    await supabase
+    const { error } = await supabase
       .from("ritual_completions")
       .upsert(ritualRows, { onConflict: "user_id,date", ignoreDuplicates: true });
+    if (error) throw error;
   }
 
   const reflectionRows = getLocalReflections().map((r) => ({
@@ -351,7 +353,8 @@ export const migrateLocalData = async (userId: string) => {
     created_at: r.date,
   }));
   if (reflectionRows.length > 0) {
-    await supabase.from("reflections").insert(reflectionRows);
+    const { error } = await supabase.from("reflections").insert(reflectionRows);
+    if (error) throw error;
   }
 
   const challengeRows = Object.entries(getLocalChallenges()).map(
@@ -363,10 +366,11 @@ export const migrateLocalData = async (userId: string) => {
     }),
   );
   if (challengeRows.length > 0) {
-    await supabase.from("challenge_progress").upsert(challengeRows, {
+    const { error } = await supabase.from("challenge_progress").upsert(challengeRows, {
       onConflict: "user_id,challenge_id",
       ignoreDuplicates: true,
     });
+    if (error) throw error;
   }
 
   markMigrated();

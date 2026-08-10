@@ -20,6 +20,7 @@ import Settings from "./pages/Settings";
 import ProfileIntake from "./pages/ProfileIntake";
 import ResetPassword from "./pages/ResetPassword";
 import NotFound from "./pages/NotFound";
+import AppErrorBoundary from "@/components/AppErrorBoundary";
 
 const queryClient = new QueryClient();
 
@@ -34,8 +35,9 @@ const App = () => (
     <TooltipProvider>
       <Toaster />
       <Sonner />
-      <AuthProvider>
-        <BrowserRouter>
+      <AppErrorBoundary>
+        <AuthProvider>
+          <BrowserRouter>
           <Routes>
             <Route path="/" element={<Index />} />
             <Route path="/login" element={<Login />} />
@@ -70,8 +72,9 @@ const App = () => (
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
-        </BrowserRouter>
-      </AuthProvider>
+          </BrowserRouter>
+        </AuthProvider>
+      </AppErrorBoundary>
     </TooltipProvider>
   </QueryClientProvider>
 );

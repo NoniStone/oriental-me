@@ -1,4 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
+import { todayKey } from "@/lib/storage";
 
 export type ProfileIntake = {
   birthDate: string;
@@ -29,7 +30,7 @@ export type DailyRecommendation = {
   tasks: DailyTask[];
 };
 
-export const localDate = () => new Intl.DateTimeFormat("en-CA").format(new Date());
+export const localDate = todayKey;
 
 export const saveProfileIntake = async (userId: string, intake: ProfileIntake) => {
   const { error } = await supabase.from("profile_intakes").upsert({
@@ -127,6 +128,11 @@ export const removeMemory = async (id: string) => {
   if (error) throw error;
 };
 
+export const clearProfileIntake = async (userId: string) => {
+  const { error } = await supabase.from("profile_intakes").delete().eq("user_id", userId);
+  if (error) throw error;
+};
+
 // Product experiments must never block the core daily experience. Until the
 // migration is deployed, writes fail silently and the product remains usable.
 export const trackProductEvent = async (
@@ -134,5 +140,6 @@ export const trackProductEvent = async (
   event: "paywall_viewed" | "early_access_requested",
   properties: Record<string, unknown> = {},
 ) => {
-  await supabase.from("product_events").insert({ user_id: userId, event, properties }).then(() => undefined).catch(() => undefined);
+  const { error } = await supabase.from("product_events").insert({ user_id: userId, event, properties });
+  if (error) throw error;
 };

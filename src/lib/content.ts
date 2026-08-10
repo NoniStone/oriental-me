@@ -183,6 +183,8 @@ export const fetchChallengeById = async (
     .from("challenges")
     .select("*")
     .eq("id", id)
+    .eq("status", "published")
+    .or(inSeason)
     .maybeSingle();
   if (error) throw error;
   return data ? mapChallenge(data) : null;
