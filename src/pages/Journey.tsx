@@ -10,6 +10,7 @@ import { fetchProfile, fetchReflections, fetchStats } from "@/lib/cloud";
 import { Copy, Sparkles } from "lucide-react";
 import { toast } from "sonner";
 import { JourneyToday } from "@/components/JourneyToday";
+import MemoryPanel from "@/components/MemoryPanel";
 
 const Journey = () => {
   const [params] = useSearchParams();
@@ -135,6 +136,8 @@ const Journey = () => {
       </section>
 
       <JourneyToday />
+
+      <MemoryPanel />
 
       <section className="grid gap-4 sm:grid-cols-2">
         <div className="paper-card p-5">
