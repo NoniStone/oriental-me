@@ -32,6 +32,7 @@ serve(async (req) => {
       admin.from('journey_task_completions').select('task_id,date,completed').eq('user_id', user.id).order('date', { ascending: false }).limit(30),
     ]);
     const context = { profile, intake, memory, recentCheckins: checkins, recentReflections: reflections, recentTaskCompletions: completions, current: payload };
+    if (action === 'review' && (checkins?.length ?? 0) < 4) return json({ error: 'insufficient_history' }, 422);
     const requested = action === 'daily'
       ? `Using this unified user context, create today's recommendation. Return {"headline":"...","observation":"...","recommendation":"...","gentleHumour":"...","tasks":[{"id":"short-slug","title":"...","detail":"...","category":"morning|food|movement|evening|reflection"}]}. Make exactly 3 practical tasks. Context: ${JSON.stringify(context)}`
       : action === 'reflection'
