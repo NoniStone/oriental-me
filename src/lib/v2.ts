@@ -105,3 +105,11 @@ export const setTaskCompleted = async (userId: string, taskId: string, completed
   );
   if (error) throw error;
 };
+
+export const fetchTodayTaskCompletions = async (userId: string) => {
+  const { data, error } = await supabase.from("journey_task_completions")
+    .select("task_id, completed")
+    .eq("user_id", userId).eq("date", localDate());
+  if (error) throw error;
+  return new Map((data ?? []).map((row) => [row.task_id, row.completed]));
+};
