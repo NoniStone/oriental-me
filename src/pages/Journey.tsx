@@ -11,6 +11,7 @@ import { fetchProfileIntake } from "@/lib/v2";
 import { Copy, Sparkles } from "lucide-react";
 import { toast } from "sonner";
 import MemoryPanel from "@/components/MemoryPanel";
+import WeeklyReview from "@/components/WeeklyReview";
 
 const Journey = () => {
   const [params] = useSearchParams();
@@ -141,6 +142,7 @@ const Journey = () => {
       {intake && <section className="paper-card p-5"><h2 className="font-display text-lg font-semibold">Your living profile</h2><p className="mt-1 text-sm text-muted-foreground">The practical context your companion uses — never a diagnosis.</p><div className="mt-4 grid gap-2 text-sm sm:grid-cols-2"><p className="rounded-xl bg-muted/60 p-3"><span className="block text-xs font-semibold uppercase text-terracotta">Rhythm</span>{intake.wakeTime || "—"} → {intake.sleepTime || "—"}</p><p className="rounded-xl bg-muted/60 p-3"><span className="block text-xs font-semibold uppercase text-terracotta">Week shape</span>{intake.workRhythm || "Still getting to know you"}</p><p className="rounded-xl bg-muted/60 p-3 sm:col-span-2"><span className="block text-xs font-semibold uppercase text-terracotta">Interests</span>{intake.interests.length ? intake.interests.join(" · ") : "Still getting to know you"}</p></div></section>}
 
       <section className="paper-card p-5"><h2 className="font-display text-lg font-semibold">Rhythm review</h2><p className="mt-1 text-sm text-muted-foreground">A simple picture of the patterns you are building this week.</p><div className="mt-4 grid grid-cols-3 gap-2 text-center"><div className="rounded-xl bg-jade-soft p-3"><p className="font-display text-xl font-semibold text-primary">{stats?.checkIns ?? 0}</p><p className="text-[11px] text-muted-foreground">check-ins</p></div><div className="rounded-xl bg-jade-soft p-3"><p className="font-display text-xl font-semibold text-primary">{stats?.rituals ?? 0}</p><p className="text-[11px] text-muted-foreground">rituals</p></div><div className="rounded-xl bg-jade-soft p-3"><p className="font-display text-xl font-semibold text-primary">{stats?.reflections ?? 0}</p><p className="text-[11px] text-muted-foreground">reflections</p></div></div></section>
+      <WeeklyReview />
 
       <section className="grid gap-4 sm:grid-cols-2">
         <div className="paper-card p-5">
