@@ -1,7 +1,9 @@
+import { useState } from "react";
 import { Link, Navigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/components/auth/AuthProvider";
 import { ArrowRight, Sparkles, Leaf, Compass } from "lucide-react";
+import LaunchSequence from "@/components/LaunchSequence";
 
 const features = [
   {
@@ -23,12 +25,12 @@ const features = [
 
 const Index = () => {
   const { session, loading } = useAuth();
+  const [introDone, setIntroDone] = useState(false);
 
-  if (loading) {
-    return <div className="flex min-h-screen items-center justify-center"><img src="/assets/logo.png" alt="" className="h-12 w-12 animate-pulse rounded-full" /></div>;
-  }
+  if (loading) return <LaunchSequence onComplete={() => setIntroDone(true)} />;
 
   if (session) return <Navigate to="/home" replace />;
+  if (!introDone) return <LaunchSequence onComplete={() => setIntroDone(true)} />;
 
   return (
     <div className="min-h-screen">

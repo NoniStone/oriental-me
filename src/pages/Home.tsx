@@ -12,6 +12,7 @@ import { fetchRituals } from "@/lib/content";
 import { fetchProfile, fetchStats, fetchTodayCheckIn, saveCheckInCloud } from "@/lib/cloud";
 import { dayOfYear, todayKey, type CheckIn as CheckInType } from "@/lib/storage";
 import { toast } from "sonner";
+import LaunchSequence from "@/components/LaunchSequence";
 
 const greeting = () => {
   const hour = new Date().getHours();
@@ -24,8 +25,9 @@ const Home = () => {
   const { user } = useAuth();
   const client = useQueryClient();
   const [localCheckIn, setLocalCheckIn] = useState<CheckInType | null>(null);
+  const [introDone, setIntroDone] = useState(false);
 
-  const { data: profile } = useQuery({ queryKey: ["profile"], queryFn: () => fetchProfile(user!.id), enabled: !!user });
+  const { data: profile, isLoading: profileLoading } = useQuery({ queryKey: ["profile"], queryFn: () => fetchProfile(user!.id), enabled: !!user });
   const { data: stats } = useQuery({ queryKey: ["stats"], queryFn: () => fetchStats(user!.id), enabled: !!user });
   const { data: cloudCheckIn, isLoading } = useQuery({ queryKey: ["checkin", todayKey()], queryFn: () => fetchTodayCheckIn(user!.id), enabled: !!user });
   const { data: rituals = [] } = useQuery({ queryKey: ["rituals"], queryFn: fetchRituals });
@@ -48,6 +50,8 @@ const Home = () => {
   });
 
   const remaining = Math.max(0, 3 - checkInCount);
+
+  if (profileLoading || !introDone) return <LaunchSequence memberName={profile?.display_name ?? user?.user_metadata?.display_name ?? "there"} onComplete={() => setIntroDone(true)} />;
 
   return (
     <div className="space-y-6">
