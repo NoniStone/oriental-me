@@ -98,7 +98,14 @@
 }
 
 @layer utilities {
+  .page-enter { animation: page-enter 420ms cubic-bezier(.2,.8,.2,1) both; }
+  .landing-shell { overflow: hidden; }
   .paper-card {
     @apply rounded-3xl border border-border/70 bg-card shadow-[0_2px_16px_-6px_hsl(24_28%_16%/0.12)];
   }
+}
+
+@keyframes page-enter {
+  from { opacity: 0; transform: translate3d(18px, 10px, 0); }
+  to { opacity: 1; transform: translate3d(0, 0, 0); }
 }
