@@ -51,10 +51,10 @@ const Home = () => {
 
   const remaining = Math.max(0, 3 - checkInCount);
 
-  if (profileLoading || !introDone) return <LaunchSequence memberName={profile?.display_name ?? user?.user_metadata?.display_name ?? "there"} onComplete={() => setIntroDone(true)} />;
+  if (profileLoading || !introDone) return <LaunchSequence onComplete={() => setIntroDone(true)} />;
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 page-enter">
       <section>
         <p className="text-sm text-muted-foreground">{new Date().toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "long" })}</p>
         <h1 className="mt-1 text-3xl font-semibold tracking-tight">{greeting()}{profile?.display_name ? `, ${profile.display_name}` : ""}.</h1>

@@ -2,19 +2,16 @@ import { useEffect } from "react";
 
 type LaunchSequenceProps = {
   onComplete: () => void;
-  memberName?: string | null;
 };
 
 const words = "Oriental Me".split("");
 
-const LaunchSequence = ({ onComplete, memberName }: LaunchSequenceProps) => {
+const LaunchSequence = ({ onComplete }: LaunchSequenceProps) => {
   useEffect(() => {
-    const timer = window.setTimeout(onComplete, memberName ? 2700 : 2200);
+    // Let the completed mark fade away before revealing the next screen.
+    const timer = window.setTimeout(onComplete, 2400);
     return () => window.clearTimeout(timer);
-  }, [memberName, onComplete]);
-
-  const hour = new Date().getHours();
-  const greeting = hour < 12 ? "Good morning" : hour < 18 ? "Good afternoon" : "Good evening";
+  }, [onComplete]);
 
   return (
     <div className="launch-screen" role="status" aria-label="Opening Oriental Me">
@@ -32,7 +29,6 @@ const LaunchSequence = ({ onComplete, memberName }: LaunchSequenceProps) => {
           <circle cx="50" cy="73" r="7" fill="hsl(var(--background))" />
         </svg>
       </div>
-      {memberName && <p className="launch-greeting">{greeting}{memberName ? `, ${memberName}` : ""}.</p>}
     </div>
   );
 };
