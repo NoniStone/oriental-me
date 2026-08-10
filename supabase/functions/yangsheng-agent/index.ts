@@ -46,6 +46,10 @@ serve(async (req) => {
     if (action === 'daily') {
       const row = { user_id: user.id, date: today, headline: parsed.headline, observation: parsed.observation, recommendation: parsed.recommendation, gentle_humour: parsed.gentleHumour || null, tasks: parsed.tasks || [], context_version: 'v2-agent-1' };
       const { data, error } = await admin.from('daily_recommendations').insert(row).select().single();
+      if (error?.code === '23505') {
+        const { data: existing, error: existingError } = await admin.from('daily_recommendations').select('*').eq('user_id', user.id).eq('date', today).single();
+        if (!existingError && existing) return json({ result: existing, reused: true });
+      }
       if (error) return json({ error: 'save_failed' }, 500);
       return json({ result: data });
     }

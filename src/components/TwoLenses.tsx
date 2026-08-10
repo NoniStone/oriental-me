@@ -38,7 +38,6 @@ const TwoLenses = ({
     setSaving(true);
     try {
       const id = await addReflectionCloud(user.id, reflectContext, text.trim());
-      await invokeAgent("feedback", { source: "reflection", context: reflectContext, text: text.trim() }).catch(() => undefined);
       queryClient.invalidateQueries({ queryKey: ["reflections"] });
       queryClient.invalidateQueries({ queryKey: ["stats"] });
       setSavedId(id);

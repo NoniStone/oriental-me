@@ -75,7 +75,9 @@ export const invokeAgent = async <T>(
     body: { action, payload },
   });
   if (error) throw error;
-  return data as { result?: T; error?: string };
+  const response = data as { result?: T; error?: string };
+  if (response.error) throw new Error(response.error);
+  return response;
 };
 
 export const fetchTodayRecommendation = async (userId: string) => {
@@ -123,4 +125,14 @@ export const fetchMemory = async (userId: string) => {
 export const removeMemory = async (id: string) => {
   const { error } = await supabase.from("ai_memory_items").delete().eq("id", id);
   if (error) throw error;
+};
+
+// Product experiments must never block the core daily experience. Until the
+// migration is deployed, writes fail silently and the product remains usable.
+export const trackProductEvent = async (
+  userId: string,
+  event: "paywall_viewed" | "early_access_requested",
+  properties: Record<string, unknown> = {},
+) => {
+  await supabase.from("product_events").insert({ user_id: userId, event, properties }).then(() => undefined).catch(() => undefined);
 };

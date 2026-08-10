@@ -6,7 +6,6 @@ import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/components/auth/AuthProvider";
 import { toast } from "sonner";
-import { fetchProfileIntake } from "@/lib/v2";
 
 type Mode = "signin" | "signup";
 
@@ -31,10 +30,7 @@ const Login = () => {
   const [busy, setBusy] = useState(false);
 
   useEffect(() => {
-    if (!session) return;
-    fetchProfileIntake(session.user.id)
-      .then((intake) => navigate(intake ? "/home" : "/onboarding"))
-      .catch(() => navigate("/home"));
+    if (session) navigate("/home");
   }, [session, navigate]);
 
   const submit = async (e: React.FormEvent) => {
