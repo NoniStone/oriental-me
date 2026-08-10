@@ -3,7 +3,6 @@ import { Link } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import CheckIn, { readPattern } from "@/components/CheckIn";
 import RitualCard from "@/components/RitualCard";
-import TwoLenses from "@/components/TwoLenses";
 import SeasonBanner from "@/components/SeasonBanner";
 import { useAuth } from "@/components/auth/AuthProvider";
 import { getArchetype } from "@/data/archetypes";
@@ -53,7 +52,6 @@ const Home = () => {
 
   const checkIn = localCheckIn ?? cloudCheckIn ?? null;
   const archetype = getArchetype(profile?.archetype_id ?? undefined);
-  const reading = cloudCheckIn?.ai_reading ?? null;
 
   const requestReading = async (c: CheckInType) => {
     if (!user) return;
@@ -153,20 +151,6 @@ const Home = () => {
               <div className="h-3 w-full animate-pulse rounded-full bg-primary/10" />
               <div className="h-3 w-2/3 animate-pulse rounded-full bg-primary/15" />
             </div>
-          </div>
-        ) : reading ? (
-          <div className="animate-fade-up space-y-4">
-            <div>
-              <p className="mt-2 inline-block rounded-full bg-primary px-3.5 py-1 text-sm font-semibold text-primary-foreground">
-                ✨ {reading.patternName}
-              </p>
-              <p className="mt-3 text-sm leading-relaxed">{reading.reading}</p>
-            </div>
-            <TwoLenses
-              traditional={reading.traditional}
-              modern={reading.modern}
-              experiment={reading.experiment}
-            />
           </div>
         ) : (
           <div className="animate-fade-up">
