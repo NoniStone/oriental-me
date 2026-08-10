@@ -2,7 +2,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider } from "@/components/auth/AuthProvider";
 import ProtectedRoute from "@/components/auth/ProtectedRoute";
 import AdminRoute from "@/components/auth/AdminRoute";
@@ -16,7 +16,6 @@ import Journey from "./pages/Journey";
 import Challenges from "./pages/Challenges";
 import ChallengeDetail from "./pages/ChallengeDetail";
 import Discover from "./pages/Discover";
-import Plan from "./pages/Plan";
 import Settings from "./pages/Settings";
 import ProfileIntake from "./pages/ProfileIntake";
 import NotFound from "./pages/NotFound";
@@ -49,7 +48,7 @@ const App = () => (
               }
             />
             <Route path="/home" element={guarded(<Home />)} />
-            <Route path="/plan" element={guarded(<Plan />)} />
+            <Route path="/plan" element={guarded(<Navigate to="/journey" replace />)} />
             <Route path="/journey" element={guarded(<Journey />)} />
             <Route path="/challenges" element={guarded(<Challenges />)} />
             <Route
