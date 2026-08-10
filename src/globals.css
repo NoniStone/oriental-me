@@ -99,6 +99,7 @@
 
 @layer utilities {
   .page-enter { animation: page-enter 420ms cubic-bezier(.2,.8,.2,1) both; }
+  .app-shell-pending { opacity: 0; }
   .landing-shell { overflow: hidden; }
   .paper-card {
     @apply rounded-3xl border border-border/70 bg-card shadow-[0_2px_16px_-6px_hsl(24_28%_16%/0.12)];

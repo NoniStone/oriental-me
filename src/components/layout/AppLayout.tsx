@@ -32,12 +32,11 @@ const AppLayout = ({ children }: { children: React.ReactNode }) => {
     enabled: !!user,
   });
 
-  if (location.pathname === "/home" && !homeLaunchDone) {
-    return <LaunchSequence onComplete={finishHomeLaunch} />;
-  }
+  const isHomeLaunching = location.pathname === "/home" && !homeLaunchDone;
 
   return (
-    <div className="min-h-screen pb-28 page-enter">
+    <>
+      <div className={cn("min-h-screen pb-28", isHomeLaunching ? "app-shell-pending" : "page-enter")}>
       <header className="sticky top-0 z-40 border-b border-border/60 bg-background/85 backdrop-blur-md">
         <div className="mx-auto flex max-w-2xl items-center gap-3 px-5 py-3">
           <Link to="/" className="flex items-center gap-2.5">
@@ -106,7 +105,10 @@ const AppLayout = ({ children }: { children: React.ReactNode }) => {
           ))}
         </div>
       </nav>
-    </div>
+
+      </div>
+      {isHomeLaunching && <LaunchSequence onComplete={finishHomeLaunch} />}
+    </>
   );
 };
 
